@@ -1,0 +1,74 @@
+% chapter included in vclmanual.tex
+\documentclass[vcl_manual.tex]{subfiles}
+\begin{document}
+
+
+\chapter{Technical details}\label{chap:TechnicalDetails}
+\flushleft
+
+\begin{longtable}[l]{|p{40mm}|p{100mm}|}
+\endfirsthead
+\label{table:fileList} \\
+\endhead
+\hline
+\bfseries File name & \bfseries Purpose \\ \hline
+vcl\_manual.pdf & Instruction manual (this file) \\ \hline
+
+vectorclass.h & Top-level C++ header file. This will include several other header files, according to the indicated instruction set \\ \hline
+
+instrset.h & Detection of which instruction set the code is compiled for,  various common definitions, and functions that depend on the instruction set. Included by vectorclass.h \\ \hline
+
+vectori128.h & Defines classes, operators and functions for integer vectors with a total size of 128 bits. Included by vectorclass.h \\ \hline
+
+vectori256.h & Defines classes, operators and functions for integer vectors with a total size of 256 bits for the AVX2 instruction set. Included by vectorclass.h if appropriate \\ \hline
+
+vectori256e.h & Defines classes, operators and functions for integer vectors with a total size of 256 bits for instruction sets lower than AVX2. Included by vectorclass.h if appropriate \\ \hline
+
+vectori512.h & Defines classes, operators and functions for vectors of 32-bit and 64-bit integers with a total size of 512 bits for the AVX512F instruction set. Included by vectorclass.h if appropriate \\ \hline
+
+vectori512e.h & Defines classes, operators and functions for vectors of 32-bit and 64-bit integers with a total size of 512 bits for instruction sets lower than AVX512F. Included by vectorclass.h if appropriate \\ \hline
+
+vectori512s.h & Defines classes, operators and functions for vectors of 8-bit and 16-bit integers with a total size of 512 bits for the AVX512BW instruction set. Included by vectorclass.h if appropriate \\ \hline
+
+vectori512se.h & Defines classes, operators and functions for vectors of 8-bit and 16-bit integers  with a total size of 512 bits for instruction sets lower than
+AVX512BW. Included by vectorclass.h if appropriate \\ \hline
+
+vectorf128.h & Defines classes, operators and functions for floating point vectors with a total size of 128 bits. Included by vectorclass.h \\ \hline
+
+vectorf256.h & Defines classes, operators and functions for floating point vectors with a total size of 256 bits for the AVX and later instruction sets. Included by vectorclass.h if appropriate \\ \hline
+
+vectorf256e.h & Defines classes, operators and functions for floating point vectors with a total size of 256 bits for instruction sets lower than AVX. Included by vectorclass.h if appropriate \\ \hline
+
+vectorf512.h & Defines classes, operators and functions for floating point vectors with a total size of 512 bits for the AVX512F and later instruction sets. Included by vectorclass.h if appropriate \\ \hline
+
+vectorf512e.h & Defines classes, operators and functions for floating point vectors with a total size of 512 bits for instruction sets lower than AVX512F. Included by vectorclass.h if appropriate \\ \hline
+
+vectormath\_exp.h & Optional inline mathematical functions: power, logarithms and exponential functions \\ \hline
+
+vectormath\_trig.h & Optional inline mathematical functions: trigonometric and inverse trigonometric functions \\ \hline
+
+vectormath\_hyp.h & Optional inline mathematical functions: hyperbolic and inverse hyperbolic functions \\ \hline
+
+vectormath\_common.h & Common definitions for vectormath\_exp.h, vectormath\_trig.h and vectormath\_hyp.h \\ \hline
+
+vectormath\_lib.h & Optional header file for external mathematical vector function libraries \\ \hline
+
+instrset\_detect.cpp & Optional functions for detecting which instruction set is supported at runtime \\ \hline
+
+dispatch\_example.cpp & Example of how to make automatic CPU dispatching \\ \hline
+
+changelog.txt & VCL version history \\ \hline
+
+license.txt & Apache 2.0 license \\ \hline
+
+svml\_patch & Folder containing the library win64patch.lib as well as the source code to build it. Used for fixing a compatibillity issue with Intel SVML library in 64-bit Windows \\ \hline
+
+testbench & Folder containing a test bench for testing the VCL library. This is used in the development of VCL, and is not needed by programmers using the VCL. Includes code and documentation. \\ \hline
+
+\end{longtable}
+%\end{tabular}
+\vspacesmall
+
+
+
+\end{document}

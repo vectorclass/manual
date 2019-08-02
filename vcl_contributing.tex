@@ -1,0 +1,115 @@
+% chapter included in vclmanual.tex
+\documentclass[vcl_manual.tex]{subfiles}
+\begin{document}
+
+
+\section{Making add-on packages}\label{MakingPackages}
+\flushleft
+
+Anybody can contribute add-on packages for VCL. Contributors must follow the following guidelines:
+\vspacebig
+
+
+\textbf{Purpose}\\
+The package must serve a general purpose that is useful for others. The code must rely on the VCL.
+\vspacebig
+
+\textbf{Open source}\\
+The package must be published under an open source license. 
+The preferred license is the same as for VCL, i.e. Apache 2.0 license or later.
+Other accepted licenses include GPL 3.0 or later, LGPL 3.0 or later, and revised BSD license.
+\vspacebig
+
+\textbf{Documentation}\\
+The package must include an instruction manual in English. The manual may be supplied in one of these formats:
+\begin{itemize}
+  \item Plain text as a an ASCII .txt file
+  \item Plain text as a comment in the beginning of the code file
+  \item A .pdf file. The source needed for modifying and rebuilding the .pdf file must be included.
+        The file format of the pdf source must be .tex, .odt, or .docx. Closed, proprietary file formats are not allowed.
+\end{itemize}
+The documentation must include the name and contact information of at least one person responsible for maintaining the code.
+\vspacesmall
+
+VCL does not use Doxygen or other kinds of metadata for generating documentation. You may use an advanced IDE such as Microsoft Visual Studio for navigating, tracing, browsing, and finding cross-references.
+\vspacebig
+
+
+\textbf{Coding style}\label{CodingStyle} \\
+The code must be in C++ language, with file format .h and/or .cpp.
+Names and comments must use English language.
+Name, date, and version number must be written in a comment at the beginning of each code file.
+\vspacesmall
+
+The file format is plain ASCII. UTF-8 should be avoided if possible. 
+Use Windows-style linefeeds, i.e. \textbackslash r\textbackslash n.
+Indent 4 spaces for every block level. Tabs are not allowed. Remember to set the option in your editor to use spaces instead of tabs.
+\vspacesmall
+
+The purposes of all classes, functions, and variables must be explained in comments unless they are self-explaining.
+\vspacesmall
+
+Use curly brackets for branches and loops. A closing curly bracket must be placed on a separate line. An opening curly bracket does not need a separate line.
+\codei{else-if} may be contracted without an extra curly bracket. Example:
+\begin{lstlisting}[frame=none]
+if (a < 0) {
+    // negative
+}
+else if (a == 0) {
+    // zero
+}
+else {
+    // positive
+}
+\end{lstlisting}
+\vspacebig
+
+
+\textbf{Optimization}\\
+
+All functions and operators in .h files should be \codei{static} and \codei{inline}.
+\vspacesmall
+
+Do not optimize the code for a specific microprocessor, but focus on what is likely to be optimal on future microprocessor models. The most likely bottlenecks to consider are cache use, instruction decoding, and dependency chains. Small loops are usually more efficient than large unrolled loops.
+\vspacesmall
+
+Minimize the use of static constants because they take op memory space even when they are not used.
+Static constants may be stored in templates that are not instantiated if they are not used.
+\vspacesmall
+
+Preprocessing \codei{\#define}'s must have unique names that are unlikely to cause name clashes because they are in the global namespace. It is preferred to use \codei{const int} etc. instead for defining constants.
+\vspacesmall
+
+\textbf{Testing}\\
+Any code must be thoroughly tested with the latest version of VCL before submission.
+It should preferably be tested with multiple different compilers and different operating systems.
+Add-on packages may have their own test bench.
+\vspacesmall
+
+
+\section{Contributing to VCL}\label{Contributing}
+Bug reports should preferably be filed as issues on the git repository.
+\vspacesmall
+
+\textbf{Avoid feature bloat}\\
+Do not put new features into the main VCL files unless there is general agreement that they are needed. Special purpose features should instead be placed in add-on packages.
+\vspacesmall
+
+The coding style must follow the guidelines listed above on page \pageref{CodingStyle}. Do not insert metadata for Doxygen or similar tools. Follow the optimization guidelines mentioned above.
+
+
+Any modification to the main VCL files should be tested with different compilers and different operating systems on the test bench described below in chapter \ref{chap:TestBench}.
+\vspacesmall
+
+
+
+\section{Test bench}\label{chap:TestBench}
+A test bench has been developed for the purpose of automatic testing of VCL.
+The test bench includes C++ code and a bash script for automatic testing of operators and functions. The script will run through a list of test cases to test each operator or  function with many different combinations of vector classes, instruction sets, compilers, and operating systems. Each test case will be implemented by compiling and running a small test program and comparing the resulting values with the expected values.
+\vspacesmall
+
+The test bench is used in the development of VCL. It is not intended for programmers that use the VCL. All code and documentation for the test bench is provided in the folder named testbench.
+\vspacesmall
+
+
+\end{document}

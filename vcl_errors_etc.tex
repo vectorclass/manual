@@ -1,0 +1,112 @@
+% chapter included in vclmanual.tex
+\documentclass[vcl_manual.tex]{subfiles}
+\begin{document}
+
+\chapter{Technical details}\label{chap:TechnicalDetails}
+
+\section{Error conditions}\label{chap:ErrorConditions}
+
+\subsection{Runtime errors}\label{RuntimeErrors}
+\flushleft
+
+The vector class library is generally not producing runtime error messages. An index out of range produces behavior that is implementation-dependent. This means that the output may be different for different instruction sets or for different versions of the vector class library.
+\vspacesmall
+
+For example, an attempt to read a vector element with an index that is out of range may result in various behaviors, such as producing zero, taking the index modulo the vector size, giving the last element, or producing an arbitrary value. Likewise, an attempt to write a vector element with an index that is out of range may variously take the index modulo the vector size, write the last element, or do nothing. This applies to functions such as \codei{insert}, \codei{extract}, \codei{load\_partial}, \codei{store\_partial}, \codei{cutoff}, \codei{permute}, \codei{blend}, \codei{lookup}, and \codei{gather}. The same applies to a bit-index that is out of range in rotate functions
+and shift operators (\textless \textless , \textgreater \textgreater).
+\vspacesmall
+
+Boolean vectors in the broad form (see page \pageref{tableBooleanVectorSizes}) are stored as integer vectors. The only allowed values for boolean vector elements in this case are 0 (false) and -1 (true). The behavior for other values is implementation-dependent and possibly inconsistent. For example, the behavior of the select function when a boolean selector element is a mixture of 0 and 1 bits depends on the instruction set. For instruction sets prior to SSE4.1, it will select between the operands bit-by-bit. For SSE4.1 and higher it will select integer vectors byte-by-byte, using the leftmost bit of each byte in the selector input. For floating point vectors under SSE4.1 and higher, it will use only the leftmost bit (sign bit) of the selector. Boolean vectors in the compact form have only one bit for each element.
+\vspacesmall
+
+An integer division by a variable that is zero will usually produce a runtime exception.
+\vspacesmall
+
+A program crash may be caused by alignment errors with instruction sets prior to AVX. This can happen if a VCL vector is stored in a dynamic array or a container class template instance that does not have correct alignment. See page \pageref{Alignment}
+\vspacesmall
+
+
+\subsection{Floating point errors}\label{FloatingPointErrors}
+The Vector Class Library produces infinity (INF) or "Not A Number" (NAN) to indicate floating point errors, as discussed on page \pageref{NoExceptionTrapping}.
+Floating point overflow will usually produce infinity, floating point underflow produces zero, and an invalid floating point operation produces NAN (Not A Number). The INF and NAN codes will usually propagate to the end result where they can be detected.
+\vspacesmall
+
+There are a few cases where INF and NAN codes do not propagate. For example, dividing a nonzero number by INF produces zero. Error codes cannot propagate through integer and boolean vectors. For example:
+\vspacesmall
+
+\begin{lstlisting}[frame=none]
+Vec4d a, b;
+...
+Vec4db f = a > 1.0;
+b = select(f, a, 0.5);
+\end{lstlisting}
+\vspacesmall
+
+The boolean vector elements in \codei{f} will be either true or false, even if \codei{a} is NAN, because a boolean can have no other values. 
+In the case that an element of \codei{a} is NAN, the corresponding element in \codei{f} will be false, and the element in \codei{b} will be 0.5. The NAN error is not propagated from \codei{a} to \codei{b}. Therefore, you have to check for errors before making a boolean expression. This can be done like this:
+
+\begin{lstlisting}[frame=none]
+Vec4d a, b;
+...
+if ( ! horizontal_and(is_finite(a))) {
+    // handle error
+    ...
+}
+Vec4db f = a > 1.0;
+b = select(f, a, 0.5);
+\end{lstlisting}
+\vspacesmall
+
+
+\subsection{Compile-time errors}\label{CompileTimeErrors}
+The Vector Class Library is making heavy use of metaprogramming features that go to the limit of what modern compilers can do. Occasional problems have been observed with all compilers.
+Errors that are specific to a particular compiler are listed in separate files at the GIT repository under miscellaneous.
+\vspacesmall
+
+Even small syntax errors may result in very long error messages due to the heavy use of templates and overloading. These error messages may be confusing, but generally indicating the line number of the error.
+\vspacesmall
+
+Integer vector division by a \codei{const\_int} or \codei{const\_uint} can produce a compile-time error message when the divisor is zero or out of range.
+\vspacesmall
+ 
+Version 1.xx of VCL may produce error messages that are not very informative, such as 
+\textbf{"Static\_error\_check\textless false\textgreater"} due to limitations in template metaprogramming.
+\vspacesmall
+
+\textbf{"Ambiguous call to overloaded function"}: \\
+This can happen when parameters have wrong types.
+Make sure all parameters have the correct type.
+\vspacesmall
+
+
+\subsection{Link errors}\label{LinkErrors}
+
+\textbf{"unresolved external symbol \_\_intel\_cpu\_indicator\_x"}: \\
+This link error occurs when you are using Intel's SVML library without including a CPU dispatcher. Add the library libircmt.lib or libirc.a to use Intel's  CPU dispatch function. Make sure to choose the 32-bit or 64-bit of the library, as appropriate. See page \pageref{ExternalMathLibrary} for details.
+\vspacesmall
+
+\textbf{"unresolved external symbol \_\_svml\_sin2@@16}, etc. \\
+You need to link the library \textbf{svmlpatch.lib}, which you can find at the git repository under miscellaneous.
+\vspacesmall
+
+
+\subsection{Implementation-dependent behavior}\label{ImplementationDependentBehavior}
+
+A big advantage of the VCL library is that you can compile the same source code for different instruction set extensions. A higher instruction set will generally give faster code, but produce the same results. There may, however, be cases where the same code generates different results with different instruction sets or different compilers. These cases include:
+
+\begin{itemize}
+  \item An index out of range produces implementation-dependent results. Functions such as 
+  \codei{insert}, \codei{extract}, \codei{load\_partial}, \codei{store\_partial}, \codei{cutoff}, \codei{permute}, \codei{blend}, \codei{lookup}, \codei{gather}, and \codei{scatter} may produce different results for an index out of range depending on the instruction set. No exception or error message is generated, only a meaningless number.
+  
+  \item permute and blend functions allow a "don't care" index (\codei{V\_DC}) to be specified. The result for a don't care element may depend on the instruction set.
+  
+  \item Negative zero. The floating point values of 0.0 and -0.0 are normally regarded as equal. Some functions may return 0.0 or -0.0 depending on the instruction set, e.g. when rounding a negative number. The sign of a zero can be detected by the functions \codei{sign\_bit} and \codei{sign\_combine}.
+You may {} \codei{\#define SIGNED\_ZERO} {} to get consistent and pedantic conformance to the specifications of signed zero in the IEEE 754-2019 standard.
+  
+  \item NANs. An error code can be propagated through NAN (not-a-number) values and retrieved by the function \codei{nan\_code}. When two NAN values with different codes are combined, for example by adding them together, the result may be either of the two values, depending on the compiler. The sign of a NAN has no meaning and may vary. \\
+  Use the \codei{minimum} and \codei{maximum} functions rather than \codei{min} and \codei{max} if you want to propagate NAN values through these functions.
+  
+\end{itemize}
+\vspacesmall
+
+\end{document}

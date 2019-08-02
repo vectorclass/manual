@@ -1,0 +1,704 @@
+% chapter included in vclmanual.tex
+\documentclass[vcl_manual.tex]{subfiles}
+\begin{document}
+
+
+\chapter{Performance considerations}\label{chap:PerformanceConsiderations}
+
+\section{Comparison of alternative methods for writing SIMD code}\label{AlternativeMethodsForSIMDCode}
+\flushleft
+
+The SIMD (Single Instruction Multiple Data) instructions play an important role when software performance has to be optimized. Several different ways of writing SIMD code are discussed below.
+\vspacesmall
+
+\textbf{Assembly code}\\
+Assembly programming is the ultimate way of optimizing code. Almost anything is possible in assembly code, but it is quite tedious and error-prone. There are thousands of different instructions, and it is quite difficult to remember which instruction belongs to which instruction set extension. Assembly code is difficult to document, difficult to debug, and difficult to maintain.
+\vspacesmall
+
+\textbf{Intrinsic functions}\\
+Several compilers support intrinsic functions that are direct representations of machine instructions. A big advantage of using intrinsic functions rather than assembly code is that the compiler takes care of register allocation, function calling conventions, and other details that are difficult to keep track of when writing assembly code. Another advantage is that the compiler can optimize the code further by such methods as scheduling, interprocedural optimization, function inlining, constant propagation, common subexpression elimination, loop invariant code motion, induction variables, etc. Many of these optimization method are rarely used in assembly code because they make the code unwieldy and unmanageable. Consequently, the combination on intrinsic functions and a good optimizing compiler can often produce more efficient code than what a decent assembly programmer would do.
+\vspacesmall
+
+A disadvantage of intrinsic functions is that these functions have long names that are difficult to remember and they make the code look awkward.
+\vspacesmall
+
+\textbf{Intel vector classes}\\
+Intel has published a number of vector classes in the form of three C++ header files named fvec.h, dvec.h and ivec.h. These are simpler to use than the intrinsic functions, but unfortunately the Intel vector class files are poorly maintained; they provide only the most basic functionality; and Intel has done very little to promote, support or develop them. The Intel vector classes have no way of converting data between arrays and vectors. This leaves us with no way of putting data into a vector other than specifying each element separately - which pretty much destroys the advantage of using vectors. The Intel vector classes work only with Intel and MS compilers.
+\vspacesmall
+
+\textbf{The VCL vector class library}\\
+The present vector class library has several important features, listed on page \pageref{Features}. It provides the same level of optimization as the intrinsic functions, but it is much easier to use. This makes it possible to make optimal use of the SIMD instructions without the need to remember the thousands of different instructions or intrinsic functions. It also takes away the hassle of remembering which instruction belongs to which instruction set extension and making different code versions for different instruction sets.
+\vspacesmall
+
+\textbf{Automatic vectorization}\\
+A good optimizing compiler is able to automatically transform linear code to vector code in simple cases. Typically, a good compiler will vectorize an algorithm that loops through an array and does some calculations on each array element.
+\vspacesmall
+
+Automatic vectorization is the easiest way of generating SIMD code, and I would very much recommend to use this method when it works. Automatic vectorization may fail or produce suboptimal code in the following cases:
+
+\begin{itemize}
+\item when the algorithm is too complex.
+\item when data have to be re-arranged in order to fit into vectors and it is not obvious to the compiler how to do this, or when other parts of the code needs to be changed to handle the re-arranged data.
+\item when it is not known to the compiler which data sets are bigger or smaller than the vector size.
+\item when it is not known to the compiler whether the size of a data set is a multiple of the vector size or not.
+\item when the algorithm involves calls to functions that are defined elsewhere or cannot be inlined and are not readily available in vector versions.
+\item when the algorithm involves many branches that are not easily vectorized.
+\item When the compiler cannot rule out that not-taken branches may generate false exceptions or other side effects.
+\item when floating point operations have to be reordered or transformed and it is not known to the compiler whether these transformations are permissible with respect to precision, overflow, etc.
+\item when functions are implemented with lookup tables.
+\end{itemize}
+\vspacesmall
+
+The present vector class library is intended as a good alternative when automatic vectorization fails to produce optimal code for any of these reasons.
+\vspacesmall
+
+
+\section{Choice of compiler and function libraries}\label{ChoiceOfCompiler}
+
+It is recommended to compile for 64-bit mode because this gives access to more memory and more registers. The CPU gives you access to only 8 vector registers in 32-bit mode, but 32 vector registers in 64-bit mode if the AVX512 instruction set is enabled.
+\vspacesmall
+
+The vector class library has support for the following four compilers:
+\vspacesmall
+
+\textbf{Microsoft Visual Studio}\\
+This is a very popular compiler for Windows because it has a good and user friendly IDE (Integrated Development Environment) and debugger. Make sure you are compiling for the "unmanaged" version, i. e. \emph{not} using the .net common language runtime (CLR).
+\vspacesmall
+
+The Microsoft compiler optimizes reasonably well, but not as good as the other compilers, and the support for the latest instruction sets is incomplete.
+\vspacesmall
+
+\textbf{Intel C++ compiler}\\
+The current version of Intel C++ compiler (version 19.0) cannot compile version 2.xx of VCL due to problems with \codei{constexpr} functions. Use version 1.xx of VCL instead with Intel compiler.\\
+The Intel compiler optimizes better than the Microsoft compiler. Intel also provides some of the best optimized function libraries for mathematical and other purposes. Unfortunately, the Intel compilers and some of the function libraries favor Intel CPUs, and produce code that runs slower than necessary on CPUs of any other brand than Intel. It is possible to work around this limitation for the Intel function libraries and in some cases also for the compiler. 
+See Agner Fog's \href{https://www.agner.org/optimize/blog/read.php?i=49}{blog} 
+and \href{https://www.agner.org/optimize/#manual_cpp}{C++ manual} 
+for details. Intel's compilers are available for Windows, Linux and Mac platforms.
+\vspacesmall
+
+\textbf{Gnu C++ compiler}\\
+This compiler produced very good optimizations in my tests. The g++ compiler is available for all x86 and x86-64 platforms. The math functions in the glibc library are sometimes not fully optimized, but this is not a problem if you are using the math functions in VCL.
+\vspacesmall
+
+\textbf{Clang C++ compiler}\\
+This compiler produced very good optimizations in my tests. The Clang compiler is available for all x86 and x86-64 platforms.
+\vspacesmall
+
+My recommendation is to use the Gnu or Clang compiler for the final version of a program when performance is important. The Microsoft compiler may be a convenient aid in the development phase. The Intel compiler should not be used if the code may run on an AMD processor.
+\vspacesmall
+
+
+\section{Choosing the optimal vector size and precision} \label{ChoosingOptimalVectorSize}
+
+It takes the same time to make a vector addition with vectors of eight single precision floats (\codei{Vec8f}) as with vectors of four double precision floats (\codei{Vec4d}). Likewise, it takes the same time to add two integer vectors whether the vectors have eight 32-bit integers (\codei{Vec8i}) or sixteen 16-bit integers (\codei{Vec16s}). Therefore, it is advantageous to use the lowest precision or resolution that fits the data. It may even be worthwhile to modify a floating point algorithm to reduce loss of precision if this allows you to use single precision rather than double precision. However, you should also take into account the time it takes to convert data from one precision to another. Therefore, it is not good to mix different precisions.
+\vspacesmall
+
+The total vector size is 128 bits, 256 or 512 bits, depending on the instruction set. 
+The 256-bit floating point vectors are advantageous when the AVX instruction set is available and enabled. The 256-bit integer vectors are advantageous under the AVX2 instruction set. 
+The 512-bit integer and floating point vectors are available with the AVX512 instruction set.
+Table \ref{table:integerVectorClasses} on page \pageref{table:integerVectorClasses} lists the recommended instruction set for each vector class. 
+You can compile multiple versions of your code for different instruction sets as explained in chapter \ref{CPUDispatching} below. This makes it possible to code for the largest vector size in order to make your code ready for the newest CPU's. 
+For example, if you are using the vector class Vec16f then you will be using 512-bit vectors when the code is running on a CPU that supports AVX512. The code will use two 256-bit vectors instead of one 512-bit vector when running on a CPU with only AVX2.
+\vspacesmall
+
+Current microprocessors can typically do two full size vector operations per clock cycle in small loops. (See \href{https://www.agner.org/optimize/#manuals}{Agner's optimization manuals for details} ).
+\vspacesmall
+
+
+\section{Putting data into vectors}\label{PuttingDataIntoVectors}
+
+The different ways of putting data into vectors are listed on page \pageref{ConstructingVectors}. If the vector elements are constants known at compile time, then the fastest way is to use a constructor:
+\begin{example}
+\label{exampleVectConstructor}
+\end{example}
+\begin{lstlisting}[frame=single]
+Vec4i a(1);            // a = (1, 1, 1, 1)
+Vec4i b(2, 3, 4, 5);   // b = (2, 3, 4, 5)
+\end{lstlisting}
+\vspacesmall
+
+If the vector elements are not constants then the fastest way is to load from an array with the method \codei{load}. However, it is not good to load data from an array immediately after writing the data elements to the array one by one, because this causes a "store forwarding stall" (see \href{https://www.agner.org/optimize/#manual_cpp}{Agner's microarchitecture manual}). This is illustrated in the following examples:
+
+\begin{example}
+\label{exampleArrayLoopV}
+\end{example}
+\begin{lstlisting}[frame=single]
+// Make vector using constructor
+int MakeMyData(int i); // make whatever data we need
+void DoSomething(Vec4i & data); // handle these data
+const int datasize = 1000; // total number data elements
+  ...
+for (int i = 0; i < datasize; i += 4) {
+    Vec4i d(MakeMyData(i),   MakeMyData(i+1),
+            MakeMyData(i+2), MakeMyData(i+3));
+    DoSomething(d);
+}
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{example}
+\label{exampleArrayLoopW}
+\end{example}
+\begin{lstlisting}[frame=single]
+// Load from small array
+int MakeMyData(int i); // make whatever data we need
+void DoSomething(Vec4i & data); // handle these data
+const int datasize = 1000; // total number data elements
+  ...
+for (int i = 0; i < datasize; i += 4) {
+    int data4[4];
+    for (int j = 0; j < 4; j++) {
+        data4[j] = MakeMyData(i+j); 
+    }
+    // store forwarding stall for large read after small writes:
+    Vec4i d = Vec4i().load(data4);
+    DoSomething(d);
+}
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{example}
+\label{exampleArrayLoopX}
+\end{example}
+\begin{lstlisting}[frame=single]
+// Make array a little bigger
+int MakeMyData(int i); // make whatever data we need
+void DoSomething(Vec4i & data); // handle these data
+const int datasize = 1000; // total number data elements
+  ...
+for (int i = 0; i < datasize; i += 8) {
+    int data8[8];
+    for (int j = 0; j < 8; j++) {
+        data8[j] = MakeMyData(i+j); 
+    }
+    Vec4i d;
+    for (int k = 0; k < 8; k += 4) {
+        d.load(data8 + k);
+        DoSomething(d);
+    }
+}
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{example}
+\label{exampleArrayLoopY}
+\end{example}
+\begin{lstlisting}[frame=single]
+// Make array full size
+int MakeMyData(int i); // make whatever data we need
+void DoSomething(Vec4i & data); // handle these data
+const int datasize = 1000; // total number data elements
+  ...
+int data1000[datasize];
+int i;
+for (i = 0; i < datasize; i++) {
+    data1000[i] = MakeMyData(i); 
+}
+Vec4i d;
+for (i = 0; i < datasize; i += 4) {
+    d.load(data1000 + i);
+    DoSomething(d);
+}
+\end{lstlisting}
+\vspacesmall
+
+\begin{example}
+\label{exampleArrayLoopInsert}
+\end{example}
+\begin{lstlisting}[frame=single]
+// Use insert. No array needed
+int MakeMyData(int i); // make whatever data we need
+void DoSomething(Vec4i & data); // handle these data
+const int datasize = 1000; // total number data elements
+  ...
+Vec4i d;  // declare vector
+for (int i = 0; i < datasize; i += 4) {
+    for (int j = 0; j < 4; j++) {
+        d.insert(j, MakeMyData(i+j)); // insert element
+    }
+    DoSomething(d);
+}
+\end{lstlisting}
+\vspacesmall
+
+In example \ref{exampleArrayLoopV}, we are combining four data elements into vector d by calling a constructor with four parameters. This may not be the most efficient way because it requires several instructions to combine the four numbers into a single vector.
+\vspacesmall
+
+In example \ref{exampleArrayLoopW}, we are putting the four values into an array and then loading the array into a vector. This is causing the so-called \emph{store forwarding stall}. A store forwarding stall occurs in the CPU hardware when doing a large read (here 128 bits) immediately after a smaller write (here 32 bits) to the same address range. This causes a delay of 10 - 20 clock cycles.
+\vspacesmall
+
+In example \ref{exampleArrayLoopX}, we are putting eight values into an array and then reading four elements at a time. If we assume that it takes more than 10 - 20 clock cycles to call MakeMyData four times then the first four elements of the array will have sufficient time to make it into the level-1 cache while we are writing the next four elements. This delay is sufficient to avoid the store forwarding stall. A disadvantage of example \ref{exampleArrayLoopX} is that we need an extra loop.
+\vspacesmall
+
+In example \ref{exampleArrayLoopY}, we are putting a thousand elements into an array before loading them. This is certain to avoid the store forwarding stall. A disadvantage of example \ref{exampleArrayLoopY} is that the large array takes more cache space.
+\vspacesmall
+
+Example \ref{exampleArrayLoopInsert} avoids any memory intermediate by inserting elements directly into the vector. This method is most efficient when the AVX512VL instruction set is enabled. The compiler is likely to keep often-used vectors in registers without saving them to memory.
+\vspacesmall
+
+
+\section{Alignment of arrays and vectors}\label{Alignment}
+
+Reading and writing vectors to memory is likely to be faster if the array in memory is aligned to an address divisible by the vector size. The vector size is 16, 32, or 64 bytes for 128, 256, and 512 bits, respectively. The program is likely to crash if vectors are not aligned by at least 16 when the instruction set is less than AVX.
+\vspacesmall
+
+Most compilers will align large arrays automatically if they are stored in static memory, but perhaps not if they are stored in local memory or allocated with \codei{new}, etc.
+\vspacesmall
+
+
+To align an array by 32 in Windows, write:
+\begin{lstlisting}[frame=none]
+__declspec(align(32)) int mydata[1000];
+\end{lstlisting}
+\vspacesmall
+
+In Unix-like systems, write:
+
+\begin{lstlisting}[frame=none]
+int mydata[1000] __attribute__((aligned(32)));
+\end{lstlisting}
+\vspacesmall
+
+It is always recommended to align large arrays for performance reasons if the code uses vectors. Unfortunately, it may be more complicated to align arrays that are allocated dynamically with operator \codei{new} or with container classes. 
+Older versions of the C++ standard do not specify how to make aligned memory allocation. Newer versions of C++ support alignment with \codei{std::align} (C++11) or \codei{std::aligned\_alloc} (C++17). Linux systems have the function \codei{posix\_memalign} but this method may not be portable to all platforms.
+\vspacesmall
+
+If your compiler does not offer an appropriate method for aligning dynamically allocated memory then you may do the alignment yourself:
+
+\begin{lstlisting}[frame=none]
+// Example of aligning memory
+int arraySize = 1000;     // Required memory size
+const int alignBy = 64;   // Required alignment
+// allocate more than needed
+char * unalignedAddress = new char[arraySize + alignBy];
+// round up the address to nearest multiple of alignBy
+char * alignedAddress = (char*)(((size_t)unalignedAddress + alignBy - 1) & (-alignBy));
+
+... //use alignedAddress
+
+// remember to free at unalignedAddress, not alignedAddress
+delete[] unalignedAddress; // free memory
+
+\end{lstlisting}
+\vspacesmall
+
+
+
+\section{When the data size is not a multiple of the vector size}\label{NotAMultipleOfVectorSize}
+
+It is obviously easier to vectorize a data set when the number of elements in the data set is a multiple of the vector size. Here, we will discuss different ways of handling the situation when the data do not fit into an integral number of vectors. We will use the simple example of adding 134 integers stored in an array. The following examples illustrate different solutions.
+\vspacesmall
+
+\begin{example}
+\label{exampleOddLoop1}
+\end{example}
+\begin{lstlisting}[frame=single]
+// Handling the remaining data one by one
+const int datasize = 134;
+const int vectorsize = 8;
+const int regularpart = datasize & (-vectorsize); // = 128
+// (AND-ing with -vectorsize will round down to the nearest
+// lower multiple of vectorsize. This works only if vectorsize
+// is a power of 2)
+
+int mydata[datasize];
+  ... // initialize mydata
+
+Vec8i sum1(0), temp;
+int i;
+// loop for 8 numbers at a time
+for (i = 0; i < regularpart; i += vectorsize) {
+    temp.load(mydata+i);  // load 8 elements
+    sum1 += temp;         // add 8 elements
+}
+int sum = 0;
+// loop for the remaining 6 numbers
+for (; i < datasize; i++) {
+    sum += mydata[i];
+}
+sum += horizontal_add(sum1); // add the vector sum
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{example}
+\label{exampleOddLoop2}
+\end{example}
+\begin{lstlisting}[frame=single]
+// Handling the remaining data with a smaller vector size
+const int datasize = 134;
+const int vectorsize = 8;
+const int regularpart = datasize & (-vectorsize); // = 128
+int mydata[datasize];
+  ... // initialize mydata
+
+Vec8i sum1(0), temp;
+int sum = 0;
+int i;
+// loop for 8 numbers at a time
+for (i = 0; i < regularpart; i += vectorsize) {
+    temp.load(mydata+i);  // load 8 elements
+    sum1 += temp;         // add 8 elements
+}
+sum = horizontal_add(sum1); // sum of first 128 numbers
+if (datasize - i >= 4) {
+    // get four more numbers
+    Vec4i sum2;
+    sum2.load(mydata+i);
+    i += 4;
+    sum += horizontal_add(sum2); 
+}
+// loop for the remaining 2 numbers
+for (; i < datasize; i++) {
+    sum += mydata[i];
+}
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{example}
+\label{exampleOddLoop3}
+\end{example}
+\begin{lstlisting}[frame=single]
+// Use partial load for the last vector
+const int datasize = 134;
+const int vectorsize = 8;
+const int regularpart = datasize & (-vectorsize); // = 128
+
+int mydata[datasize];
+  ... // initialize mydata
+
+Vec8i sum1(0), temp;
+// loop for 8 numbers at a time
+for (int i = 0; i < regularpart; i += vectorsize) {
+    temp.load(mydata+i);  // load 8 elements
+    sum1 += temp;         // add 8 elements
+}
+// load the last 6 elements
+temp.load_partial(datasize-regularpart, mydata+regularpart);
+sum1 += temp;             // add last 6 elements
+
+int sum = horizontal_add(sum1); // vector sum
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{example}
+\label{exampleOddLoop4}
+\end{example}
+\begin{lstlisting}[frame=single]
+// Read past the end of the array and ignore excess data
+const int datasize = 134;
+const int vectorsize = 8;
+int mydata[datasize];
+  ... // initialize mydata
+
+Vec8i sum1(0), temp;
+// loop for 8 numbers at a time, reading 136 numbers
+for (int i = 0; i < datasize; i += vectorsize) {
+    temp.load(mydata+i);  // load 8 elements
+    if (datasize - i < vectorsize) {
+        // set excess data to zero
+        // (this may be faster than load_partial)
+        temp.cutoff(datasize - i);
+    }
+    sum1 += temp;         // add 8 elements
+}
+int sum = horizontal_add(sum1); // vector sum
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{example}
+\label{exampleOddLoop5}
+\end{example}
+\begin{lstlisting}[frame=single]
+// Make array bigger and set excess data to zero
+const int datasize = 134;
+const int vectorsize = 8;
+// round up datasize to nearest higher multiple of vectorsize
+const int arraysize = 
+    (datasize + vectorsize - 1) & (-vectorsize);  // = 136
+int mydata[arraysize];
+int i;
+  ... // initialize mydata
+
+// set excess data to zero
+for (i = datasize; i < arraysize; i++) {
+    mydata[i] = 0;
+}
+
+Vec8i sum1(0), temp;
+// loop for 8 numbers at a time, reading 136 numbers
+for (i = 0; i < arraysize; i += vectorsize) {
+    temp.load(mydata+i);  // load 8 elements
+    sum1 += temp;         // add 8 elements
+}
+int sum = horizontal_add(sum1); // vector sum
+\end{lstlisting}
+
+
+It is clearly advantageous to increase the array size to a multiple of the vector size, as in example \ref{exampleOddLoop5} above. Likewise, if you are storing vector data to an array, then it is an advantage to make the result array bigger to hold the excess data. If this is not possible then use \codei{store\_partial} to write the last partial vector to the array.
+\vspacesmall
+
+It is usually possible to read past the end of an array, as in example \ref{exampleOddLoop4} above, without causing problems. However, there is a theoretical possibility that the array is placed at the very end of the readable data section so that the program will crash when attempting to read from an illegal address past the end of the valid data area. To consider this problem, we need to look at each possible method of data storage:
+\begin{itemize}
+  \item An array declared inside a function, and not static, is stored on the stack. The subsequent addresses on the stack will contain the return address and parameters for the function, followed by local data, parameters, and return address of the next higher function all the way up to main. In this case there is plenty of extra data to read from. 
+  \item A static or global array is stored in static data memory. The static data area is often followed by library data, exception handler tables, link tables, etc. These tables can be seen by requesting a map file from the linker. 
+  \item Data allocated with the operator \codei{new} are stored on the heap. I have no information of the size of the end node in a heap.
+  \item If an array is declared inside a class definition then one of the three cases above applies, depending on how the class instance (object) is created.
+\end{itemize}
+\vspacesmall
+
+These problems can be avoided either by making the array bigger or by aligning the array to an address divisible by the vector size, as described on page \pageref{Alignment}. The memory page size is at least 4 kbytes, and always a power of 2. If the array is aligned by the vector size then the page boundaries are certain to coincide with vector boundaries. This makes sure that there is no memory page boundary between the end of the array and the next vector-size boundary. Therefore, we can read up to the next vector-size boundary without the risk of crossing a boundary to an invalid memory page.
+\vspacesmall
+
+
+\section{Using multiple accumulators} \label{UsingMultipleAccumulators}
+
+Consider this function which adds a long list of floating point numbers:
+
+\begin{example}
+\label{exampleLoopAccumulator1}
+\end{example}
+\begin{lstlisting}[frame=single]
+double add_long_list(double const * p, int n) {
+    int n1 = n & (-4);  // round down n to multiple of 4
+    Vec4d sum(0.0);
+    int i;
+    for (i = 0; i < n1; i += 4) {
+        sum += Vec4d().load(p + i);  // add 4 numbers
+    }
+    // add any remaining numbers
+    sum += Vec4d().load_partial(n - i, p + i);
+    return horizontal_add(sum);
+}
+\end{lstlisting}
+\vspacesmall
+
+In this example, we have a loop-carried dependency chain (see
+\href{https://www.agner.org/optimize/#manual_cpp}{Agner's C++ manual}). 
+The vector addition inside the loop has a latency of typically 3 - 5 clock cycles. As each addition has to wait for the result of the previous addition, the loop will take 3 - 5 clock cycles per iteration.
+\vspacesmall
+
+However, the throughput of floating point additions is typically one or two vector additions per clock cycle. Therefore, we are far from fully utilizing the capacity of the floating point adder. In this situation, we can double the speed by using two accumulators:
+
+\begin{example}
+\label{exampleLoopAccumulator2}
+\end{example}
+\begin{lstlisting}[frame=single]
+double add_long_list(double const * p, int n) {
+    int n2 = n & (-8);  // round down n to multiple of 8
+    Vec4d sum1(0.0), sum2(0.0);
+    int i;
+    for (i = 0; i < n2; i += 8) {
+        sum1 += Vec4d().load(p + i);     // add 4 numbers
+        sum2 += Vec4d().load(p + i + 4); // 4 more numbers
+    }
+    if (n - i >= 4) {
+        // add 4 more numbers
+        sum1 += Vec4d().load(p + i);
+        i += 4;
+    }
+    // add any remaining numbers
+    sum2 += Vec4d().load_partial(n - i, p + i);
+    return horizontal_add(sum1 + sum2);
+}
+\end{lstlisting}
+\vspacesmall
+
+Here, the addition to sum2 can begin before the addition to sum1 is finished. The loop still takes 3 - 5 clock cycles per iteration, but the number of additions done per loop iteration is doubled. It may even be worthwhile to have three or four accumulators in this case if n is very big.
+\vspacesmall
+
+In general, if we want to predict whether it is advantageous to have more than one accumulator, we first have to see if there is a loop-carried dependency chain. If the performance is not limited by a loop-carried dependency chain then there is no need for multiple accumulators. Next, we have to look at the latency and throughput of the instructions inside the loop. Floating point addition, subtraction and multiplication all have latencies of typically 3 - 5 clock cycles and a throughput of one or two vector additions/subtractions/multiplications per clock cycle. Therefore, if the loop-carried dependency chain involves floating point addition, subtraction or multiplication; and the total number of floating point operations per loop iteration is lower than the maximum throughput, then it may be advantageous to have two accumulators, or perhaps more than two.
+\vspacesmall
+
+There is rarely any reason to have multiple accumulators in integer code, because an integer vector addition has a latency of just 1 or 2 clock cycles.
+\vspacesmall
+
+\section{Using multiple threads}\label{UsingMultipleThreads}
+
+Performance can be improved by dividing the work between multiple threads on processors with multiple CPU cores. The work should be divided between threads in such as way that communication between the threads is avoided, or at least kept at a minimum.
+\vspacesmall
+
+The details of this technique is outside the scope of the present manual. The vector class library is thread-safe as long as the same vector is not accessed from multiple threads simultaneously. The floating point control word (see p. \pageref{FPControlWordManipulationFunctions}) is not shared between threads.
+\vspacesmall
+
+
+\section{Instruction sets and CPU dispatching}\label{CPUDispatching}
+\flushleft
+
+Historically, almost every new generation of microprocessors has added a new extension to the instruction set. Most of the new instructions relate to vector operations. We can take advantage of these new instructions to make vector code more efficient. The vector class library requires the SSE2 instruction set as a minimum, but it makes more efficient code when a higher instruction set is used. Table \ref{table:instructionSetHistory} indicates things that are improved for each successive instruction set extension.
+\vspacesmall
+
+\begin {table}[h]
+\caption{Instruction set history}
+\label{table:instructionSetHistory}
+\begin{tabular}{|p{24mm}|p{22mm}|p{100mm}|}
+\hline
+\bfseries Instruction \newline set & \bfseries Year \newline introduced & \bfseries VCL functions improved \\ \hline
+SSE2 & 2001 & minimum requirement for vector class library \\ \hline
+SSE3 & 2004 & floating point horizontal\_add \\ \hline
+SSSE3 & 2006 & permute, blend and lookup functions, integer abs \\ \hline
+SSE4.1 & 2007 & select, blend, horizontal\_and, horizontal\_or, integer max/min, integer multiply (32 and 64 bit), integer divide (32 bit), 64-bit integer compare (==, !=), floating point round, truncate, floor, ceil. \\ \hline
+SSE4.2 & 2008 & 64-bit integer compare (\textgreater, \textgreater =, \textless, \textless =). 64 bit integer max, min \\ \hline
+AVX & 2011 & all operations on 256-bit floating point vectors: Vec8f, Vec4d \\ \hline
+XOP \newline AMD only & 2011 & compare, horizontal\_add\_x, rotate\_left, blend, and lookup on 128-bit integer vectors \\ \hline
+FMA4 \newline AMD only & 2011 & floating point code containing multiplication followed by addition \\ \hline
+FMA3 & 2012 & floating point code containing multiplication followed by addition \\ \hline
+AVX2 & 2013 & All operations on 256-bit integer vectors: Vec32c, Vec32uc, Vec16s, Vec16us, Vec8i, Vec8ui, Vec4q, Vec4uq. Gather. \\ \hline
+AVX512F & 2016 & All operations on 512-bit integer and floating point vectors: Vec16i, Vec16ui, Vec8q, Vec8uq, Vec16f, Vec8d. \\ \hline
+AVX512BW & 2018 & 512 bit vectors with 8-bit and 16-bit integer elements \\ \hline
+AVX512DQ & 2018 & Faster multiplication of vectors of 64-bit integers. \\ \hline
+AVX512VL & 2018 & compact boolean vectors for 128 and 256 bit data \\ \hline
+AVX512ER & 2016 & Only on a few processor models. Fast exponential functions. Better precision on approx\_recipr and approx\_rsqrt. \\ \hline
+AVX512VBMI & future & Faster permutation functions etc. for Vec32c and Vec64c \\ \hline
+AVX512VBMI2 & future & Faster extract from 8-bit and 16-bit integer vectors \\ \hline
+\end{tabular}
+\end{table}
+\vspacesmall
+
+The vector class library makes it possible to compile for different instruction sets from the same source code. Different versions are made simply by recompiling the code with different compiler options. The desired instruction set can be specified on the compiler command line as listed in table \ref{table:CommandLineOptions}.
+
+\begin {table}[h]
+\caption{Command line options}
+\label{table:CommandLineOptions}
+\begin{tabular}{|p{26mm}|p{28mm}|p{28mm}|p{28mm}|p{28mm}|}
+\hline
+\bfseries Instruction set & \bfseries Gnu and Clang compiler & \bfseries Intel compiler Linux & \bfseries Intel compiler Windows & \bfseries MS compiler \\ \hline
+
+SSE2 & -msse2 & -msse2 & /arch:sse2 & /arch:sse2 \\ \hline
+SSE3 & -msse3 & -msse3 & /arch:sse3 & /arch:sse2 \newline /D\_\_SSE3\_\_ \\ \hline
+SSSE3 & -mssse3 & -mssse3 & /arch:ssse3 & /arch:sse2 \newline /D\_\_SSSE3\_\_ \\ \hline
+SSE4.1 & -msse4.1 & -msse4.1 & /arch:sse4.1 & /arch:sse2 \newline /D\_\_SSE4\_1\_\_ \\ \hline
+SSE4.2 & -msse4.2 & -msse4.2 & /arch:sse4.2 & /arch:sse2 \newline /D\_\_SSE4\_2\_\_ \\ \hline
+AVX & -mavx \newline -fabi-version=0 & -mavx & /arch:avx & /arch:avx /DINSTRSET=7 \\ \hline
+XOP & -mavx \newline -mxop \newline -fabi-version=0 & not available & not available & /arch:avx \newline /D\_\_XOP\_\_ \\ \hline
+FMA4 & -mfma4 & not available & not available & not available \\ \hline
+FMA3 & -mfma & -mfma & /Qfma & /DINSTRSET=7 \\ \hline
+AVX2 & -mavx2 \newline -fabi-version=0 & -mavx2 & /arch:avx2 & /arch:avx2 \newline /DINSTRSET=8 \\ \hline
+AVX512F & -mavx512f & -xCOMMON-AVX512 & /arch:COMMON-AVX512 & /DINSTRSET=9 \\ \hline
+AVX512ER & -mavx512er & -xMIC-AVX512 & /arch:MIC-AVX512 & /DINSTRSET=10 /D\_\_AVX512ER\_\_ \\ \hline
+AVX512VL/BW/ DQ & -mavx512vl -mavx512bw -mavx512dq & -mavx512vl -mavx512bw -mavx512dq & /arch:CORE-AVX512 & /DINSTRSET=10 \\ \hline
+AVX512VBMI & -mavx512vbmi & -mavx512vbmi & ?? & /D \_\_AVX512VBMI\_\_ \\ \hline
+AVX512VBMI2 & -mavx512vbmi2 & -mavx512vbmi2 & ?? & /D \_\_AVX512VBMI2\_\_ \\ \hline
+\end{tabular}
+\end{table}
+\vspacesmall
+
+
+The Microsoft compiler does not have command line options for all the instruction sets, but other instruction sets can be specified as defines which are detected in the preprocessing directives of the vector class library.
+\vspacesmall
+
+The FMA3 and FMA4 instruction sets are not always handled directly by the code in the vector class library, but by the compiler. The compiler may automatically combine a floating point multiplication and a subsequent addition or subtraction into a single instruction, unless you have specified a strict floating point model.
+\vspacesmall
+
+It is recommended to specify compiler options that allow efficient code optimizations. Suitable options on Gnu and Clang compilers are
+-O3 -fno-trapping-math -fno-math-errno.
+\vspacesmall
+
+There is no advantage in using the biggest vector classes unless the corresponding instruction set is specified, but it can be convenient to use these classes anyway if the same source code is compiled for multiple versions with different instruction sets. Each large vector will simply be split up into two or four smaller vectors when compiling for a lower instruction set.
+\vspacesmall
+
+It is recommended to make an automatic CPU dispatcher that detects at run time which instruction sets are supported by the actual CPU, and selects the best version of the code accordingly. For example, you may compile the code three times for three different instruction sets: SSE2, AVX2 and AVX512VL/BW/DQ. The CPU dispatcher will then set a function pointer to point to the appropriate version. You can use the function instrset\_detect (see below, page \pageref{instrsetDetect}) to detect the supported instruction set. The file dispatch\_example.cpp shows an example of how to make a CPU dispatcher that selects the appropriate code version. The critical part of the program is called through a function pointer. This function pointer initially points to the CPU dispatcher, which is activated the first time the function is called. The CPU dispatcher changes the function pointer to point to the best version of the code, and then continues in the selected code. The next time the function is called, the call goes directly to the right version of the code without calling the CPU dispatcher first. It is probably not necessary to make a branch for instruction sets prior to SSE2 because most computers today run 64-bit mode which includes SSE2.
+\vspacesmall
+
+There is an important restriction when you are combining code compiled for different instruction sets: Do not transfer any data as vector objects between different pieces of code that are compiled for different instruction sets, because the vectors may be represented differently under the different instruction sets. It is recommended to transfer the data as arrays instead between different parts of the program that are compiled for different instruction sets.
+\vspacesmall
+
+The functions listed below, defined in the file instrset\_detect.cpp, can be used for detecting at run time which instruction set is supported.
+\vspacesmall
+
+\label{instrsetDetect}
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & int instrset\_detect() \\ \hline
+\bfseries Description & 
+returns one of these values: \newline
+0   = 80386 instruction set \newline
+1   or above = SSE supported by CPU \newline
+2   or above = SSE2 \newline
+3   or above = SSE3 \newline
+4   or above = Supplementary SSE3 (SSSE3) \newline
+5   or above = SSE4.1 \newline
+6   or above = SSE4.2 \newline
+7   or above = AVX supported by CPU and O.S. \newline
+8   or above = AVX2 \newline
+9   or above = AVX512F \newline
+10  or above = AVX512VL, AVX512BW, and AVX512DQ \\ \hline
+ \bfseries Efficiency & poor \\ \hline
+\end{tabular}
+\vspacebig
+
+
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & bool hasFMA3() \\ \hline
+\bfseries Description & returns true if FMA3 is supported \\ \hline
+ \bfseries Efficiency & poor \\ \hline
+\end{tabular}
+\vspacebig
+
+
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & bool hasFMA4() \\ \hline
+\bfseries Description & returns true if AMD FMA4 is supported \\ \hline
+ \bfseries Efficiency & poor \\ \hline
+\end{tabular}
+\vspacebig
+
+
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & bool hasXOP() \\ \hline
+\bfseries Description & returns true if AMD XOP is supported \\ \hline
+ \bfseries Efficiency & poor \\ \hline
+\end{tabular}
+\vspacebig
+
+
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & bool hasAVX512ER() \\ \hline
+\bfseries Description & returns true if AVX512ER is supported \\ \hline
+ \bfseries Efficiency & poor \\ \hline
+\end{tabular}
+\vspacebig
+
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & bool hasAVX512VBMI() \\ \hline
+\bfseries Description & returns true if AVX512VBMI is supported \\ \hline
+ \bfseries Efficiency & poor \\ \hline
+\end{tabular}
+\vspacebig
+
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & bool hasAVX512VBMI2() \\ \hline
+\bfseries Description & returns true if AVX512VBMI2 is supported \\ \hline
+ \bfseries Efficiency & poor \\ \hline
+\end{tabular}
+\vspacebig
+
+
+\section{Function calling convention}\label{FunctionCallingConvention}
+Function calls are most efficient when vectors are transferred in registers rather than in memory. This can be achieved in various ways:
+
+\begin{itemize}
+\item Use inline functions. This is useful for small functions and for functions that are only called in one place. An optimizing compiler may inline functions automatically, even if they are not specified as \codei{inline}. You may declare such functions \codei{static} as well to prevent the compiler from making a non-inline copy of the inlined function.
+
+\item Use Linux or MacOS. Vector parameters are transferred in registers by default on these platforms. Vector function returns are transferred in registers in 64-bit mode.
+
+\item Use \codei{\_\_fastcall} in 64-bit Windows. The Clang and Microsoft compilers can transfer vector parameters and vector returns in registers when \codei{\_\_fastcall} is used on the function declaration. See the example on page \pageref{examplePolynomialVectorcall}.
+
+\item Use a vector size that fits the instruction set, according to table \ref{table:integerVectorClasses} on page \pageref{table:integerVectorClasses}.
+
+\end{itemize}
+
+
+\end{document}

@@ -1,0 +1,262 @@
+% chapter included in vclmanual.tex
+\documentclass[vcl_manual.tex]{subfiles}
+\begin{document}
+
+\flushleft
+
+\chapter{Boolean operations and per-element branches}\label{chap:BooleanOperations}
+Consider this piece of C++ code:
+
+\begin{lstlisting}[frame=none]
+int a[4], b[4], c[4], d[4];
+  ...
+for (int i = 0; i < 4; i++) {
+    d[i] = (a[i] > 0 && a[i] < 10) ? b[i] : c[i];
+}
+\end{lstlisting}
+\vspacesmall
+
+We can do this with vectors in the following way:
+
+\begin{lstlisting}[frame=none]
+Vec4i a, b, c, d;
+  ...
+d = select(a > 0 & a < 10, b, c);
+\end{lstlisting}
+\vspacesmall
+
+The \codei{select} function is similar to the \codei{?:}  operator. 
+It has three vector parameters: The first parameter is a boolean vector that chooses between the elements of the second and the third vector parameter. 
+\vspacesmall
+
+The relational operators \codei{\textgreater}, \codei{\textgreater=}, \codei{\textless}, \codei{\textless=}, \codei{==}, \codei{!=} produce boolean vectors, 
+which accept the boolean operations \codei{\&}, 
+\codei{|}, \codei{$\wedge$}, \codei{$\sim$} (and, or, exclusive or, not). 
+\vspacesmall
+
+In the above example, the expressions \codei{a \textgreater{} 0} and \codei{a \textless{} 10} are boolean vectors of type \codei{Vec4ib}. The boolean vectors must have a type that matches the data vectors they are used with. Table \ref{table:BooleanVectorClasses} on page \pageref{table:BooleanVectorClasses} shows which boolean vector class to use for each vector type.
+\vspacesmall
+
+The vector elements that are not selected are calculated anyway because normally all parts of a vector are calculated. For example:
+
+\begin{lstlisting}[frame=none]
+Vec4f a(-1.0f, 0.0f, 1.0f, 2.0f);
+Vec4f b = select(a >= 0.0f, sqrt(a), 0.0f);
+\end{lstlisting}
+\vspacesmall
+
+Here, we will be calculating the square root of -1 even though we are not using it. This will not cause problems if floating point exceptions are masked off, which they normally are. A safe solution that works even if floating point exceptions are enabled would be:
+
+\begin{lstlisting}[frame=none]
+Vec4f a(-1.0f, 0.0f, 1.0f, 2.0f);
+Vec4f b = sqrt(max(a, 0.0f));
+\end{lstlisting}
+\vspacesmall
+
+
+Likewise, the \codei{\&} and \codei{|} operators are calculating both input operands, even if the second operand is not needed. The following examples illustrates this:
+
+\begin{lstlisting}[frame=none]
+// array version:
+float a[4] = {0.0f, 1.0f, 2.0f, 3.0f};
+float b[4];
+for (int i = 0; i < 4; i++) {
+   if (a[i] > 0.0f && 1.0f/a[i] != 4.0f) {
+      b[i] = a[i]; 
+   }
+   else {
+      b[i] = 1.0f;   
+   }
+}
+\end{lstlisting}
+\vspacesmall
+
+and the vector version of the same:
+
+\begin{lstlisting}[frame=none]
+Vec4f a(0.0f, 1.0f, 2.0f, 3.0f);
+Vec4f b = select(a > 0.0f & 1.0f/a != 4.0f, a, 1.0f);
+\end{lstlisting}
+\vspacesmall
+
+In the array version, we will never divide by zero because the \codei{\&\&} operator does not evaluate the second operand when the first operand is false. But in the vector version, we are indeed dividing by zero because the \codei{\&} operator always evaluates both operands. The vector class library defines the operators \codei{\&\&} and \codei{||} as synonyms for \codei{\&} and \codei{|} for convenience, but they are still doing the bitwise AND or OR operation, so \codei{\&} and \codei{|} are actually more representative of what these operators really do. This example should be changed to:
+
+\begin{lstlisting}[frame=none]
+Vec4f a(0.0f, 1.0f, 2.0f, 3.0f);
+Vec4f b = select(a > 0.0f & a != 0.25f, a, 1.0f);
+\end{lstlisting}
+\vspacesmall
+
+
+\section{Internal representation of boolean vectors}\label{InternalRepresentationOfBoolean}
+
+The way boolean vectors are stored depends on the instruction set and the Vector Class Library (VCL) version.
+Older instruction sets have the boolean vectors stored with the same number of bits as the data vectors they are applied to (broad boolean vectors). The later instruction sets AVX512 and AVX512VL allow boolean vectors to be stored with only one bit for each element (compact boolean vectors). 
+\vspacesmall
+
+Version 1.xx of the VCL is using the broad boolean vectors for the sake of backwards compatibility, while version 2.xx is prioritizing the more efficient compact boolean vectors when the appropriate instruction set is enabled. The boolean vector sizes are summarized in the following table.
+\vspacesmall
+
+\label{tableBooleanVectorSizes}
+\begin{tabular}{|p{50mm}|p{40mm}|p{40mm}|}
+\hline
+\bfseries Data vector size \newline and instruction set & \bfseries VCL version 1 \newline Boolean vectors & \bfseries VCL version 2 \newline Boolean vectors \\ \hline
+128 bits & broad & broad  \\ \hline
+128 bits with AVX512VL & broad & compact \\ \hline
+256 bits & broad & broad  \\ \hline
+256 bits with AVX512VL & broad & compact \\ \hline
+512 bits & broad & broad  \\ \hline
+512 bits with AVX512F & compact & compact \\ \hline
+\end{tabular}
+\vspacebig
+
+The broad boolean vectors are stored as integer vectors with the same number of bits per element as the integer or floating point vectors they are used for. For example, the broad boolean vector class \codei{Vec4fb} is stored as a vector of four 32-bit integers because it is used with vectors \codei{Vec4f} of four single precision floating point numbers, using 32 bits each. The broad boolean vector class \codei{Vec4db} is stored as a vector of four 64-bit integers because it is used with vectors \codei{Vec4d} of four double precision floating point numbers, using 64 bits each. Note that the integer representation of true in a broad boolean vector element is not 1, but  -1. The representation of false is 0. Any other values than 0 and -1 in broad boolean vectors will produce wrong and inconsistent results that depend on the instruction set.
+\vspacesmall
+
+The compact boolean vectors are stored with one bit per element (at least 8 bits). 
+You should make no assumption about how boolean vectors are stored if your code may be compiled for different instruction sets or different versions of VCL. For example,
+\codei{Vec16ib} uses 16 bits of storage when compiling for AVX512, but 512 bits of storage when compiling for AVX2. Do not store boolean vectors directly to binary files, and do not transmit boolean vectors between different functions that may be compiled for different instruction sets or different VCL versions.
+\vspacesmall
+
+Different compact boolean vectors are mutually compatible if they have the same number of elements. Different broad boolean vectors are mutually compatible if they have the same number of elements and the same number of bits. Broad and compact boolean vectors are not compatible with each other. See page \pageref{ConversionBetweenBooleanTypes} for conversion between different types of boolean vectors.
+\vspacesmall
+
+
+\section{Functions for use with booleans}\label{FunctionsForBooleans}
+
+\vspacesmall
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & vector select(boolean vector s, vector a, vector b) \\ \hline
+\bfseries Defined for & all integer and floating point vector classes \\ \hline
+\bfseries Description & branch per element.\newline
+result[i] = s[i] ? a[i] : b[i] \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(-1, 0, 1, 2);
+Vec4i b = select(a>0, a+10, a-10); // b = (-11,-10,11,12)
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & if\_add(boolean vector f, vector a, vector b) \\ \hline
+\bfseries Defined for & all integer and floating point vector classes \\ \hline
+\bfseries Description & conditional addition \newline
+result[i] = f[i] ? (a[i] + b[i]) : a[i] \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(-1, 0, 1, 2);
+Vec4i b = if_add(a < 0, a, 100);  // b = (99,0,1,2)
+\end{lstlisting}
+\vspacesmall
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & if\_sub(boolean vector f, vector a, vector b) \\ \hline
+\bfseries Defined for & all integer and floating point vector classes \\ \hline
+\bfseries Description & conditional subtraction \newline
+result[i] = f[i] ? (a[i] - b[i]) : a[i] \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\vspacebig
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & vector if\_mul(boolean vector f, vector a, vector b) \\ \hline
+\bfseries Defined for & all integer and floating point vector classes \\ \hline
+\bfseries Description & conditional multiplication\newline
+result[i] = f[i] ? (a[i] * b[i]) : a[i] \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\vspacebig
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & vector if\_div(boolean vector f, vector a, vector b) \\ \hline
+\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Description & conditional division\newline
+result[i] = f[i] ? (a[i] / b[i]) : a[i] \\ \hline
+\bfseries Efficiency & medium \\ \hline
+\end{tabular}
+\vspacebig
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & vector andnot(vector, vector) \\ \hline
+\bfseries Defined for & all boolean vector classes \\ \hline
+\bfseries Description & andnot(a,b) = a \& $\sim$ b \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\vspacebig
+
+  
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & bool horizontal\_and(boolean vector) \\ \hline
+\bfseries Defined for & all boolean vector classes \\ \hline
+\bfseries Description & The output is the AND combination of all elements \\ \hline
+\bfseries Efficiency & Medium for broad boolean vectors. Better if SSE4.1 or later. Good for compact boolean vectors \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(-1, 0, 1, 2);
+bool  b = horizontal_and(a > 0);  // b = false
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & bool horizontal\_or(boolean vector) \\ \hline
+\bfseries Defined for & all boolean vector classes \\ \hline
+\bfseries Description & The output is the OR combination of all elements \\ \hline
+\bfseries Efficiency & Medium for broad boolean vectors. Better if SSE4.1 or later. Good for compact boolean vectors \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(-1, 0, 1, 2);
+bool  b = horizontal_or(a > 0);  // b = true
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & int horizontal\_find\_first(boolean vector) \\ \hline
+\bfseries Defined for & all boolean vector classes \\ \hline
+\bfseries Description & Returns an index to the first element that is true.
+Returns -1 if all elements are false \\ \hline
+\bfseries Efficiency & medium \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i  a(1, 2, 3, 4);
+Vec4i  b(0, 2, 3, 5);
+int c = horizontal_find_first(a == b);  // c = 1
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & unsigned int horizontal\_count(boolean vector) \\ \hline
+\bfseries Defined for & all boolean vector classes \\ \hline
+\bfseries Description & counts the number of elements that are true \\ \hline
+\bfseries Efficiency & medium if SSE4.2 or later \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i  a(1, 2, 3, 4);
+Vec4i  b(0, 2, 3, 5);
+int c = horizontal_count(a == b);  // c = 2
+\end{lstlisting}
+\vspacesmall
+
+\end{document}

@@ -1,0 +1,137 @@
+\documentclass[11pt,a4paper,oneside,openright]{report}
+
+\usepackage[bindingoffset=5mm,left=20mm,right=20mm,top=20mm,bottom=20mm,footskip=10mm]{geometry}
+\usepackage[utf8x]{inputenc}
+\usepackage{hyperref}
+\usepackage[english]{babel}
+\usepackage{listings}
+\usepackage{subfiles}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{ragged2e} 
+\usepackage{cmap} % avoid fi ligatures in pdf file
+\usepackage{amsthm} % example numbering
+\usepackage{color}
+\usepackage{bold-extra} % for bold tt font. Remember to include bold-extra.sty file
+\usepackage{graphicx}
+\usepackage[yyyymmdd]{datetime}
+\usepackage{float}
+
+% style for code listing
+\renewcommand{\familydefault}{\sfdefault}
+\newtheorem{example}{Example}[chapter]  % example numbering
+\lstset{language=C}                     % formatting for code listing
+\lstset{basicstyle=\ttfamily,breaklines=true}
+\definecolor{darkGreen}{rgb}{0,0.4,0}
+\definecolor{mybrown}{rgb}{0.40,0.10,0.05}
+\lstset{commentstyle=\color{darkGreen}}  % comments color
+\lstset{keywordstyle=\color{blue}}       % keyword color
+\lstset{stringstyle=\color{mybrown}}     % string color
+\lstset{showstringspaces=false}          % don't mark spaces in strings
+
+\renewcommand{\dateseparator}{-}
+
+% command for turning indent back on after \flushleft
+\newcommand{\indenton}{\RaggedRight\parindent=15pt}
+
+% command for vertical space
+\newcommand{\vspacesmall}{\vspace{3mm}}
+\newcommand{\vspacebig}{\vspace{6mm}}
+
+% style for code inlined in text:
+\newcommand{\codei}[1]{\bfseries \ttfamily{#1}\normalfont}
+
+
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+   
+    \null %empty box needed for vfill to work
+    \vfill
+
+   {\bfseries\Huge
+    VCL 
+    \vspacesmall
+        
+    C++ vector class library 
+    \vspacebig
+        
+    manual
+   }        
+    \vspacebig
+    
+   {\Large    
+    Agner Fog
+    \vspacebig
+    
+    \copyright\ \today. Apache license 2.0
+   }
+    
+    \vfill
+    
+    \includegraphics[width=306pt]{freesoftwarelogo.jpg}
+    \vfill
+    
+\end{titlepage}
+
+\RaggedRight
+
+
+
+\tableofcontents
+\setcounter{secnumdepth}{1}
+%\indenton
+\flushleft
+
+% Introduction
+% The basics
+\subfile{vcl_introduction.tex}
+
+% Operators and functions
+\subfile{vcl_operators_and_functions.tex}
+
+% Boolean operations and per-element branches
+\subfile{vcl_bool.tex}
+
+% Conversion between vector types
+\subfile{vcl_conversion.tex}
+
+% Permute, blend, lookup, gather and scatter functions 
+\subfile{vcl_permute_functions.tex}
+
+% Mathematical functions
+\subfile{vcl_mathematical_functions.tex}
+
+% Performance
+\subfile{vcl_performance.tex}
+
+% Examples
+\subfile{vcl_examples.tex}
+
+% Application specific packages:
+%  Decimal-string conversion
+%  3-dimensional vectors
+%  complex number vectors
+%  quaternions
+%  Decimal conversion
+\subfile{vcl_packages.tex}
+
+% Error conditions
+% Implementation dependent behavior
+\subfile{vcl_errors_etc.tex}
+
+% Floating point behavior
+\subfile{vcl_float_behavior.tex}
+
+% Contributing
+% Test bench
+\subfile{vcl_contributing.tex}
+
+% File list
+\subfile{vcl_file_list.tex}
+
+
+
+\end{document}

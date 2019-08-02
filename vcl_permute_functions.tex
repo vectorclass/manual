@@ -1,0 +1,392 @@
+% chapter included in vclmanual.tex
+\documentclass[vcl_manual.tex]{subfiles}
+\begin{document}
+
+
+\chapter{Permute, blend, lookup, gather and scatter functions}\label{chap:PermuteBlendEtc}
+
+\section{Permute functions}\label{PermuteFunctions}
+\flushleft
+
+\vspacesmall
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & permute..\textless i0, i1, ...\textgreater(vector) \\ \hline
+\bfseries Defined for & all integer and floating point vector classes \\ \hline
+\bfseries Description & permutes vector elements \\ \hline
+\bfseries Efficiency & depends on parameters and instruction set \\ \hline
+\end{tabular}
+\vspacesmall
+
+The permute functions can move any element of a vector into any position, copy the same element to multiple positions, and set any element to zero.
+\vspacesmall
+
+The name of the permute function is "permute" followed by the number of vector elements, for example permute4 for Vec4i. The permute function for a vector of $n$ elements has $n$ indexes, which are entered as template parameters in angle brackets. Each index indicates the desired contents of the corresponding element in the result vector. An index $i$ in the interval
+$0 \leq i \leq n-1$ indicates that element number $i$ from the input vector should be placed in the corresponding position in the result vector. An index $i = -1$ gives a zero in the corresponding position. An index $i$ = V\_DC means don't care. This will give whatever implementation is fastest, regardless of what value it puts in this position. The value you get with "don't care" may be different for different implementations or different instruction sets.
+\vspacesmall
+
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(10, 11, 12, 13);
+Vec4i b = permute4<2,2,3,0>(a);   // b = (12, 12, 13, 10)
+Vec4i c = permute4<-1,-1,1,1>(a); // c = ( 0,  0, 11, 11)
+\end{lstlisting}
+\vspacesmall
+
+The indexes in angle brackets must be compile-time constants, they cannot contain variables or function calls. If you need variable indexes then use the lookup functions instead (see page \pageref{LookupFunctions}).
+\vspacesmall
+
+The permute functions contain a lot of metaprogramming code which is used for finding the best instructions for the given set of indexes and the specified instruction set. The metaprogramming may produce extra code when compiling in debug mode, but this extra code is eliminated when compiling for release mode with optimization on. The call to a permute function is reduced to just one or a few machine instructions in favorable cases. 
+\vspacesmall
+
+The performance is generally good when the instruction set SSSE3 or higher is enabled. The performance for permuting vectors of 16-bit integers is medium, and the performance for permuting vectors of 8-bit integers is poor for instruction sets lower than SSSE3. You may get the best performance with instruction set AVX2 or AVX512VL.
+\vspacesmall
+
+
+\section{Blend functions}\label{BlendFunctions}
+
+\vspacesmall
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & blend..\textless i0, i1, ...\textgreater(vector, vector) \\ \hline
+\bfseries Defined for & all integer and floating point vector classes \\ \hline
+\bfseries Description & permutes and blends elements from two vectors \\ \hline
+\bfseries Efficiency & depends on parameters and instruction set \\ \hline
+\end{tabular}
+\vspacesmall
+
+The blend functions are similar to the permute functions, but with two input vectors. 
+The name of the permute function is "blend" followed by the number of vector elements, for example blend4 for Vec4i. The blend function for a vector of $n$ elements has $n$ indexes, which are entered as template parameters in angle brackets. Each index indicates the desired contents of the corresponding element in the result vector. The indexes must be compile-time constants.
+An index $i$ in the interval $0 \leq i \leq n-1$ indicates that element number $i$ from the first input vector should be placed in the corresponding position in the result vector. An index $i$ in the interval $n \leq i \leq 2 \cdot n-1$ indicates that element number $i-n$ from the second input vector should be placed in the corresponding position in the result vector. An index $i$ = -1 gives a zero in the corresponding position. An index $i$ = V\_DC means don't care.
+
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(10, 11, 12, 13);
+Vec4i b(20, 21, 22, 23);
+Vec4i c = blend4<4,0,4,3>(a, b); // c = (20, 10, 20, 13)
+\end{lstlisting}
+\vspacesmall
+
+There are different methods you can use if you want to blend inputs from more than two vectors: 
+\vspacesmall
+
+1. A binary tree of blend calls, where unused values are set to V\_DC meaning don't care.
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(10, 11, 12, 13);
+Vec4i b(20, 21, 22, 23);
+Vec4i c(30, 31, 32, 33);
+Vec4i d(40, 41, 42, 43);
+Vec4i r = blend4<0,5,V_DC,V_DC>(a, b);// r = (10,21,?,?)
+Vec4i s = blend4<V_DC,V_DC,2,7>(c, d);// s = (?,?,32,43)
+Vec4i t = blend4<0,1,6,7>(r, s);      // t = (10,21,32,43)
+\end{lstlisting}
+\vspacesmall
+
+2. Set unused values to zero, then OR the results.
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(10, 11, 12, 13);
+Vec4i b(20, 21, 22, 23);
+Vec4i c(30, 31, 32, 33);
+Vec4i d(40, 41, 42, 43);
+Vec4i r = blend4<0,5,-1,-1>(a, b);// r = (10,21,0,0)
+Vec4i s = blend4<-1,-1,2,7>(c, d);// s = (0,0,32,43)
+Vec4i t = r | s;                  // t = (10,21,32,43)
+\end{lstlisting}
+\vspacesmall
+
+3. If the input vectors are stored sequentially in memory then use the lookup functions shown below.
+\vspacesmall
+
+
+\section{Lookup functions}\label{LookupFunctions}
+\vspacesmall
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & Vec16c lookup16(Vec16c, Vec16c) \newline
+Vec32c lookup32(Vec32c, Vec32c) \newline
+Vec64c lookup64(Vec64c, Vec64c) \newline
+Vec8s lookup8(Vec8s, Vec8s) \newline
+Vec16s lookup16(Vec16s, Vec16s) \newline
+Vec32s lookup32(Vec32s, Vec32s) \newline
+Vec4i lookup4(Vec4i, Vec4i) \newline
+Vec8i lookup8(Vec8i, Vec8i) \newline
+Vec16i lookup16(Vec16i, Vec16i) \newline
+Vec4q lookup4(Vec4q, Vec4q) \newline
+Vec8q lookup8(Vec8q, Vec8q) \\ \hline
+\bfseries Defined for & Vec16c, Vec32c, Vec64c, Vec8s, Vec16s, Vec32s, Vec4i, Vec8i, Vec16i, Vec4q, Vec8q \\ \hline
+\bfseries Description & Permutation with variable indexes. The first input vector contains the indexes, the second input vector is the data source. Each index must be in the range  $0 \leq i \leq n-1$ where n is the number of elements in a vector. \\ \hline
+\bfseries Efficiency & 
+Vec16i, Vec8q: Good for AVX512F, medium otherwise.  \newline
+Vec64c, Vec32s: Good for AVX512VBMI, medium for AVX512BW, poor otherwise. \newline
+Vec32c, Vec16s, Vec8i, Vec4i, Vec4q: Good for AVX2, medium otherwise. \newline
+Vec16c, Vec8s: Good for SSSE3, poor otherwise. \\ \hline
+\end{tabular}
+\vspacebig
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & 
+Vec16c lookup32(Vec16c, Vec16c, Vec16c) \newline
+Vec64c lookup128(Vec64c, Vec64c, Vec64c) \newline
+Vec8s lookup16(Vec8s, Vec8s, Vec8s) \newline
+Vec32s lookup64(Vec32s, Vec32s, Vec32s) \newline
+Vec4i lookup8(Vec4i, Vec4i, Vec4i) \newline
+Vec16i lookup32(Vec16i, Vec16i, Vec16i) \\ \hline
+\bfseries Defined for & Vec16c, Vec64c, Vec8s, Vec32s, Vec4i, Vec16i \\ \hline
+\bfseries Description & Blend with variable indexes. The first input vector contains the indexes, the following two input vectors contain the data source. Each index must be in the range  $0 \leq i \leq 2\cdot n - 1$ where n is the number of elements in each vector. \\ \hline
+\bfseries Efficiency & 
+Vec4i, Vec8s: Good for AVX2, medium or poor otherwise. \newline
+Vec16i: Good for AVX512, medium or poor otherwise. \newline
+Vec64c, Vec32s: Good for AVX512VBMI, medium for AVX512BW, poor otherwise. \newline
+Vec16c, Vec8s: Good for SSSE3, poor otherwise. \\ \hline
+\end{tabular}
+\vspacebig
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & 
+Vec4i lookup16(Vec4i, Vec4i, Vec4i, Vec4i, Vec4i) \newline
+Vec16i lookup64(Vec16i, Vec16i, Vec16i, Vec16i, Vec16i) \newline
+Vec64c lookup256(Vec64c, Vec64c, Vec64c, Vec64c, Vec64c) \newline
+Vec32s lookup128(Vec32s, Vec32s, Vec32s, Vec32s, Vec32s) \\ \hline
+\bfseries Defined for & Vec4i, Vec32s, Vec64c \\ \hline
+\bfseries Description & Blend with variable indexes. The first input vector contains the indexes, the following four input vectors contain the data source. Each index must be in the range  $0 \leq i \leq 4\cdot n - 1$ where n is the number of elements in each vector. \\ \hline
+\bfseries Efficiency & 
+Vec4i: Good for AVX2, medium otherwise. \newline
+Vec16i: Good for AVX512, medium or poor otherwise. \newline
+Vec64c, Vec32s: Good for AVX512VBMI, medium for AVX512BW, poor otherwise. 
+\\ \hline
+\end{tabular}
+\vspacebig
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & Vec4f lookup4(Vec4i, Vec4f) \newline
+Vec8f lookup8(Vec8i, Vec8f) \newline
+Vec16f lookup16(Vec16i, Vec16f) \newline
+Vec2d lookup2(Vec2q, Vec2d) \newline
+Vec4d lookup4(Vec4q, Vec4d) \newline
+Vec8d lookup8(Vec8q, Vec8d) \\ \hline
+\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Description & Permutation of floating point vectors with integer indexes. Each index must be in the range  $0 \leq i \leq n-1$ where n is the number of elements in a vector. \\ \hline
+\bfseries Efficiency & good for AVX2 and later, medium for lower instruction sets \\ \hline
+\end{tabular}
+\vspacebig
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & Vec4f lookup8(Vec4i, Vec4f, Vec4f) \newline
+Vec2d lookup4(Vec2q, Vec2d, Vec2d) \\ \hline
+\bfseries Defined for & Vec4f, Vec2d \\ \hline
+\bfseries Description & Blend of floating point vectors with integer indexes. Each index must be in the range  $0 \leq i \leq 2*n-1$ where n is the number of elements in a vector. \\ \hline
+\bfseries Efficiency & medium \\ \hline
+\end{tabular}
+\vspacebig
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & Vec16c lookup\textless n\textgreater(Vec16c index, void const * table) \newline
+Vec32c lookup\textless n\textgreater(Vec32c index, void const * table) \newline
+Vec8s lookup\textless n\textgreater(Vec8s index, void const * table) \newline
+Vec16s lookup\textless n\textgreater(Vec16s index, void const * table) \newline
+Vec4i lookup\textless n\textgreater(Vec4i index, void const * table) \newline
+Vec8i lookup\textless n\textgreater(Vec8i index, void const * table) \newline
+Vec16i lookup\textless n\textgreater(Vec16i index, void const * table) \newline
+Vec4q lookup\textless n\textgreater(Vec4q index, void const * table) \newline
+Vec8q lookup\textless n\textgreater(Vec8q index, void const * table) \newline
+Vec4f lookup\textless n\textgreater(Vec4i index, float const * table) \newline
+Vec8f lookup\textless n\textgreater(Vec8i const \& index, float const * table) \newline
+Vec16f lookup\textless n\textgreater(Vec16i const \& index, float const * table) \newline
+Vec2d lookup\textless n\textgreater(Vec2q index, double const * table) \newline
+Vec4d lookup\textless n\textgreater(Vec4q const \& i, double const * table) \newline
+Vec8d lookup\textless n\textgreater(Vec8q const \& i, double const * table) \\ \hline
+\bfseries Defined for & all floating point and signed integer vector classes \\ \hline
+\bfseries Description & Permute, blend, table lookup or gather data from array with an integer vector of indexes.\newline
+Each index must be in the range  $0 \leq i \leq n-1$, where $n$ is indicated as a template parameter. $n$ must be a positive compile-time constant. \\ \hline
+\bfseries Efficiency & good for AVX2 and later, medium for lower instruction sets \\ \hline
+\end{tabular}
+\vspacebig
+
+
+The lookup functions are similar to the permute and blend functions, but with variable indexes. They cannot be used for setting an element to zero, and there is no "don't care" option. The lookup functions can be used for several purposes:
+
+\begin{enumerate}
+\item permute with variable indexes
+\item blend with variable indexes
+\item blend from more than two sources
+\item table lookup
+\item gather non-contiguous data from an array
+\end{enumerate}
+\vspacesmall
+
+The index is always an integer vector. The input can be one or more vectors or an array. The result is a vector of the same type as the input. All elements in the index vector must be in the specified range. The behavior for an index out of range is implementation-dependent and may give any value for the corresponding element. The function may in some cases read up to one vector size past the end of the table for the sake of efficient permutation.
+\vspacesmall
+
+The lookup functions are not defined for unsigned integer vector types, but the corresponding signed versions can be used. You don't have to worry about overflow when converting unsigned integers to signed here, as long as the result vector is converted back to unsigned.
+\vspacebig
+
+
+\begin{lstlisting}[frame=none]
+// Example of permutation with variable indexes:
+Vec4f a(1.0, 1.1, 1.2, 1.3);
+Vec4i b(2, 3, 3, 0);
+Vec4f c = lookup4(b, a);  // c = (1.2, 1.3, 1.3, 1.0)
+
+// Example of blending with variable indexes:
+Vec4f a(1.0, 1.1, 1.2, 1.3);
+Vec4f b(2.0, 2.1, 2.2, 2.3);
+Vec4i c(4, 3, 2, 7);
+Vec4f d = lookup4(c,a,b); // d = (2.0, 1.3, 1.2, 2.3)
+
+// Example of blending from more than two sources:
+float sources[12] = {
+1.0,1.1,1.2,1.3,2.0,2.1,2.2,2.3,3.0,3.1,3.2,3.3};
+Vec4i i(11, 0, 5, 5);
+Vec4f c = lookup<12>(i, sources); // c = (3.3,1.0,2.1,2.1)
+\end{lstlisting}
+\vspacebig
+
+
+A function with a limited number of possible input values can be replaced by a lookup table. This is useful if table lookup is faster than calculating the function. The following example has a table of the function $y = x^2 - 1$
+
+\begin{lstlisting}[frame=none]
+// Table of the function y = x*x-1
+int table[6] = {-1,0,3,8,15,24};
+Vec4i x(4,2,0,5);
+Vec4i y = lookup<6>(table);  // y = (15, 3, -1, 24)
+
+// Example of gathering non-contiguous data from an array:
+float x[16] = { ... };
+Vec4i i(0,4,8,12);
+Vec4f y = lookup<16>(i, x); // y = (x[0],x[4],x[8],x[12])
+\end{lstlisting}
+\vspacesmall
+
+
+\section{Gather functions}\label{GatherFunctions}
+
+\vspacesmall
+\begin{tabular}{|p{30mm}|p{120mm}|} \hline
+\bfseries Function & 
+Vec4i gather4i\textless indexes\textgreater(void const * table) \newline
+Vec8i gather8i\textless indexes\textgreater(void const * table) \newline
+Vec16i gather16i\textless indexes\textgreater(void const * table) \newline
+Vec2q gather2q\textless indexes\textgreater(void const * table) \newline
+Vec4q gather4q\textless indexes\textgreater(void const * table) \newline
+Vec8q gather8q\textless indexes\textgreater(void const * table) \newline
+Vec4f gather4f\textless indexes\textgreater(void const * table) \newline
+Vec8f gather8f\textless indexes\textgreater(void const * table) \newline
+Vec16f gather16f\textless indexes\textgreater(void const * table) \newline
+Vec2d gather2d\textless indexes\textgreater(void const * table) \newline
+Vec4d gather4d\textless indexes\textgreater(void const * table) \newline
+Vec8d gather8d\textless indexes\textgreater(void const * table) \\ \hline
+\bfseries Defined for & Vec4i, Vec8i, Vec16i, Vec2q, Vec4q, Vec8q, \newline
+Vec4f, Vec8f, Vec16f, Vec2d, Vec4d, Vec8d \\ \hline
+\bfseries Description & Load non-contiguous data from a table. Indexes cannot be negative. There is no option for zeroing or don't care.  \newline
+If you need variable indexes, then use the lookup functions instead. \newline
+The function may read a full vector and permute it if all indexes are smaller than the vector size.  \\ \hline
+\bfseries Efficiency & medium \\ \hline
+\end{tabular}
+\vspacesmall
+
+\begin{lstlisting}[frame=none]
+// Example:
+int tab[8] = {10,11,12,13,14,15,16,17};
+Vec4i a = gather4i<6,4,4,0>(tab);
+// a = (16, 14, 14, 10);
+\end{lstlisting}
+\vspacesmall
+
+
+\section{Scatter functions}\label{Scatter functions}
+
+\begin{tabular}{|p{30mm}|p{120mm}|} \hline
+\bfseries Function & scatter\textless indexes\textgreater(Vec4i data, void * array) \newline
+scatter\textless indexes\textgreater(Vec8i data, void * array) \newline
+scatter\textless indexes\textgreater(Vec16i data, void * array) \newline
+scatter\textless indexes\textgreater(Vec2q data, void * array) \newline
+scatter\textless indexes\textgreater(Vec4q data, void * array) \newline
+scatter\textless indexes\textgreater(Vec8q data, void * array) \newline
+scatter\textless indexes\textgreater(Vec4f data, float * array) \newline
+scatter\textless indexes\textgreater(Vec8f data, float * array) \newline
+scatter\textless indexes\textgreater(Vec16f data, float * array) \newline
+scatter\textless indexes\textgreater(Vec2d data, double * array) \newline
+scatter\textless indexes\textgreater(Vec4d data, double * array) \newline
+scatter\textless indexes\textgreater(Vec8d data, double * array) \\ \hline
+\bfseries Defined for & 
+Vec4i, Vec8i, Vec16i, Vec2q, Vec4q, Vec8q, \newline
+Vec4f, Vec8f, Vec16f, Vec2d, Vec4d, Vec8d \\ \hline
+\bfseries Description & Store vector elements into non-contiguous positions in an array. Each vector element is stored in the array position indicated by the corresponding index. An element is not stored if the corresponding index is negative. \\ \hline
+\bfseries Efficiency & 
+Medium for 512 bit vectors if AVX512F instruction set supported. \newline
+Medium for 256 bit vectors if AVX512F, or better AVX512VL, supported. \newline
+Medium for 128 bit vectors if AVX512VL supported. \newline
+Poor otherwise. \\ \hline
+\end{tabular}
+\vspacesmall
+
+\begin{lstlisting}[frame=none]
+// Example:
+Vec8i a(10,11,12,13,14,15,16,17);
+int array[10] = {0};
+scatter<5,4,3,2,-1,-1,7,0>(a, array);
+// array = (17,0,13,12,11,10,0,16,0,0)
+\end{lstlisting}
+\vspacebig
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|} \hline
+\bfseries Function & 
+scatter(Vec4i index, uint32\_t limit, Vec4i data, void * array) \newline
+scatter(Vec8i index, uint32\_t limit, Vec8i data, void * array) \newline
+scatter(Vec16i index, uint32\_t limit, Vec16i data, void * array) \newline
+scatter(Vec2q index, uint32\_t limit, Vec2q data, void * array) \newline
+scatter(Vec4i index, uint32\_t limit, Vec4q data, void * array) \newline
+scatter(Vec4q index, uint32\_t limit, Vec4q data, void * array) \newline
+scatter(Vec8i index, uint32\_t limit, Vec8q data, void * array) \newline
+scatter(Vec8q index, uint32\_t limit, Vec8q data, void * array) \newline
+scatter(Vec4i index, uint32\_t limit, Vec4f data, float * array) \newline
+scatter(Vec8i index, uint32\_t limit, Vec8f data, float * array) \newline
+scatter(Vec16i index, uint32\_t limit, Vec16f data, float * array) \newline
+scatter(Vec2q index, uint32\_t limit, Vec2d data, double * array) \newline
+scatter(Vec4i index, uint32\_t limit, Vec4d data, double * array) \newline
+scatter(Vec4q index, uint32\_t limit, Vec4d data, double * array) \newline
+scatter(Vec8i index, uint32\_t limit, Vec8d data, double * array) \newline
+scatter(Vec8q index, uint32\_t limit, Vec8d data, double * array) \\ \hline
+\bfseries Defined for & 
+Vec4i, Vec8i, Vec16i, Vec2q, Vec4q, Vec8q, \newline
+Vec4f, Vec8f, Vec16f, Vec2d, Vec4d, Vec8d \\ \hline
+\bfseries Description & Store vector elements into non-contiguous positions in an array. Each vector element is stored in the array position indicated by the corresponding element of the index vector. An element is not stored if the corresponding index is negative or bigger than or equal to the limit. The limit will typically be the size of the array. \\ \hline
+\bfseries Efficiency & 
+Medium for 512 bit vectors if AVX512F instruction set supported. \newline
+Medium for 256 bit vectors if AVX512F, or better AVX512VL, supported. \newline
+Medium for 128 bit vectors if AVX512VL supported. \newline
+Poor otherwise. \\ \hline
+\end{tabular}
+\vspacesmall
+
+\begin{lstlisting}[frame=none]
+// Example:
+Vec8i a(10,11,12,13,14,15,16,17);
+Vec8i x(5,4,3,2,-1,99,7,0);
+int array[10] = {0};
+scatter(x, 5, a, array);
+// array = (17,0,13,12,11,0,0,0,0,0)
+\end{lstlisting}
+\vspacebig
+
+The scatter functions are useful for writing sparse arrays. If you have more dense arrays, then it may be more efficient to permute the vector and then store the whole vector into the array.
+\vspacesmall
+
+If you want to permute a dataset that is too big for the permute and blend functions, then it is better to use lookup or gather functions than to use scatter functions.
+\vspacesmall
+
+\end{document}

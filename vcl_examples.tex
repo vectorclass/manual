@@ -1,0 +1,174 @@
+% chapter included in vclmanual.tex
+\documentclass[vcl_manual.tex]{subfiles}
+\begin{document}
+
+
+\chapter{Examples}\label{chap:Examples}
+\flushleft
+
+This example calculates the polynomial $x^3 + 2\cdot x^2 - 5\cdot x + 1$ on a floating point vector. The order of calculation is specified by parentheses in order to make shorter dependency chains.
+
+\begin{example}
+\label{examplePolynomial}
+\end{example}
+\begin{lstlisting}[frame=single]
+Vec4f polynomial (Vec4f x) {
+    return (x + 2.0f) * (x * x) + ((-5.0f) * x + 1.0f);
+}
+\end{lstlisting}
+\vspacebig
+
+In 64-bit Windows, you may add \codei{\_\_vectorcall} and use a Clang or Microsoft compiler. This makes sure that vector parameters are transferred in registers rather than in memory. This is not needed when the function is inlined or when compiling for other platforms than Windows:
+
+\begin{example}
+\label{examplePolynomialVectorcall}
+\end{example}
+\begin{lstlisting}[frame=single]
+Vec4f __vectorcall polynomial (Vec4f x) {
+    return (x + 2.0f) * (x * x) + ((-5.0f) * x + 1.0f);
+}
+\end{lstlisting}
+\vspacebig
+
+
+The next example transposes a 4x4 matrix, using the AVX2 instruction set.
+
+\begin{example}
+\label{exampleTranspose4x4}
+\end{example}
+\begin{lstlisting}[frame=single]
+void transpose(float matrix[4][4]) {
+    Vec8f row01, row23, col01, col23;
+    // load first two rows
+    row01.load(&matrix[0][0]);
+    // load next two rows
+    row23.load(&matrix[2][0]);
+    // reorder into columns
+    col01 = blend8f<0,4, 8,12,1,5, 9,13>(row01, row23);
+    col23 = blend8f<2,6,10,14,3,7,11,15>(row01, row23);
+    // store columns into rows
+    col01.store(&matrix[0][0]);
+    col23.store(&matrix[2][0]);
+}
+\end{lstlisting}
+\vspacesmall
+
+Same example with AVX512:
+
+\begin{example}
+\label{exampleTranspose4x4avx512}
+\end{example}
+\begin{lstlisting}[frame=single]
+void transpose(float matrix[4][4]) {
+    Vec16f rows, columns;
+    // load entire matrix as rows
+    rows.load(&matrix[0][0]);
+    // reorder into columns
+    columns = permute16f<0,4,8,12,1,5,9,13,
+        2,6,10,14,3,7,11,15>(rows);
+    // store columns into rows
+    columns.store(&matrix[0][0]);
+}
+\end{lstlisting}
+\vspacebig
+
+The next example makes a matrix multiplication of two 4x4 matrixes.
+
+\begin{example}
+\label{exampleMatrixMul4x4}
+\end{example}
+\begin{lstlisting}[frame=single]
+void matrixmul(float A[4][4], float B[4][4], float M[4][4]){
+    // calculates M = A*B
+    Vec4f Brow[4], Mrow[4];
+    int i, j;
+    // load B as rows
+    for (i = 0; i < 4; i++) {
+        Brow[i].load(&B[i][0]);
+    }
+    // loop for A and M rows
+    for (i = 0; i < 4; i++) {
+        Mrow[i] = Vec4f(0.0f);
+        // loop for A columns, B rows
+        for (j = 0; j < 4; j++) {
+            Mrow[i] += Brow[j] * A[i][j];
+        }
+    }
+    // store M
+    for (i = 0; i < 4; i++) {
+        Mrow[i].store(&M[i][0]);
+    }
+}
+\end{lstlisting}
+\vspacebig
+
+
+The next example makes a table of the sin function and gets sin(x) and cos(x) by table lookup.
+
+\begin{example}
+\label{exampleSinTable}
+\end{example}
+\begin{lstlisting}[frame=single]
+
+#include <cmath>
+
+const double pi = 3.14159265358979323846;
+
+// length of table. Must be a power of 2.
+#define sin_tablelen 1024
+// the accuracy of table lookup is +/- pi/sin_tablelen
+
+class SinTable {
+protected:
+    float table[sin_tablelen];
+    float resolution;
+    float rres;  // 1./resolution
+public:
+    SinTable();  // constructor
+    Vec4f sin(Vec4f x);
+    Vec4f cos(Vec4f x);
+};
+
+SinTable::SinTable() {  // constructor
+    // compute resolution
+    resolution = float(2.0 * pi / sin_tablelen);
+    rres = 1.0f / resolution;
+    // Initialize table (No need to use vectors here because this 
+    // is calculated only once:)
+    for (int i = 0; i < sin_tablelen; i++) {
+        table[i] = sinf((float)i * resolution);
+    }
+}
+
+Vec4f SinTable::sin(Vec4f x) {
+    // calculate sin by table lookup
+    Vec4i index = roundi(x * rres);
+    // modulo tablelen equivalent to modulo 2*pi
+    index &= sin_tablelen - 1;
+    // look up in table
+    return lookup<sin_tablelen>(index, table);
+}
+
+Vec4f SinTable::cos(Vec4f x) {
+    // calculate cos by table lookup
+    Vec4i index = roundi(x * rres) + sin_tablelen/4;
+    // modulo tablelen equivalent to modulo 2*pi
+    index &= sin_tablelen - 1;
+    // look up in table
+    return lookup<sin_tablelen>(index, table);
+}
+
+int main() {
+    SinTable sintab;
+    Vec4f a(0.0f, 0.5f, 1.0f, 1.5f);
+    Vec4f b = sintab.sin(a);
+    // b = (0.0000 0.4768 0.8416 0.9973)
+    // accuracy +/- 0.003
+    ...
+    return 0;
+}
+\end{lstlisting}
+\vspacesmall
+
+
+\end{document}

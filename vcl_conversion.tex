@@ -1,0 +1,547 @@
+% chapter included in vclmanual.tex
+\documentclass[vcl_manual.tex]{subfiles}
+\begin{document}
+
+
+\chapter{Conversion between vector types}\label{Conversion between vector types}
+\flushleft
+
+Below is a list of methods and functions for conversion between different vector types, vector sizes or precisions.
+\vspacebig
+
+\section{Conversion between data vector types}
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Method & conversion between vector class and intrinsic vector type \\ \hline
+\bfseries Defined for & all integer and floating point vector classes \\ \hline
+\bfseries Description & conversion between a vector class and the corresponding intrinsic vector type \_\_m128, \_\_m128d, \_\_m128i, \_\_m256, \_\_m256d, \_\_m256i, \_\_m512, \_\_m512d, \_\_m512i can be done implicitly or explicitly. \newline
+Boolean vectors can be converted to their internal representation, which is an integer vector for broad boolean vectors, or a single integer for compact boolean vectors. \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i   a(0,1,2,3);
+__m128i b = a;    // b = 0x00000003000000020000000100000000
+Vec4i   c = b;    // c = (0,1,2,3)
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Method & conversion from scalar to vector \\ \hline
+\bfseries Defined for & all integer and floating point vector classes \\ \hline
+\bfseries Description & conversion from a scalar (single value) to a vector can be done explicitly by calling a constructor, or implicitly by putting a scalar where a vector is expected. All vector elements get the same value. \\ \hline
+\bfseries Efficiency & good for constant. Medium for variable as parameter \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a, b;
+a = Vec4i(5);  // explicit conversion. a = (5,5,5,5)
+b = a + 3;     // implicit conversion to Vec4i. b = (8,8,8,8)
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Method & conversion between signed and unsigned integer vectors \\ \hline
+\bfseries Defined for & all integer vector classes \\ \hline
+\bfseries Description & Conversion between signed and unsigned integer vectors can be done implicitly or explicitly. Overflow and underflow wraps around. \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i  a(-1,0,1,2);   // signed vector
+Vec4ui b = a;         // implicit conversion to unsigned.
+                      // b = (0xFFFFFFFF,0,1,2)
+Vec4ui c = Vec4ui(a); // same, with explicit conversion
+Vec4i  d = c;         // convert back to signed
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Method & conversion between different integer vector types \\ \hline
+\bfseries Defined for & all integer vector classes \\ \hline
+\bfseries Description & Conversion can be done implicitly or explicitly between all integer vector classes with the same total number of bits. This conversion does not change any bits, just the grouping of bits into elements is changed. \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec8s a(0,1,2,3,4,5,6,7);
+Vec4i b;
+b = a;           // b = (0x1000, 0x3002, 0x5004, 0x7006)
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & reinterpret\_d, reinterpret\_f, reinterpret\_i \\ \hline
+\bfseries Defined for & all integer and floating point vector classes \\ \hline
+\bfseries Description & Reinterprets a vector as a different type with the same total number of bits. No bits are changed, only interpreted differently (bit casting).\newline
+reinterpret\_d is used for converting to Vec2d, Vec4d, or Vec8d, \newline
+reinterpret\_f is used for converting to Vec4f, Vec8f, or Vc16f, \newline
+reinterpret\_i is used for converting to any integer vector type. \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4f a(1.0f, 1.5f, 2.0f, 2.5f);
+Vec4i b = reinterpret_i(a); 
+// b = (0x3F800000, 0x3FC00000, 0x40000000, 0x40200000)
+\end{lstlisting}
+\vspacesmall
+
+\label{roundToInt}
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & 
+Vec4i roundi(Vec4f) \newline
+Vec8i roundi(Vec8f) \newline
+Vec16i roundi(Vec16f) \newline
+Vec2q roundi(Vec2d) \newline
+Vec4q roundi(Vec4d) \newline
+Vec8q roundi(Vec8d) \\ \hline
+\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Description & Rounds floating point numbers to nearest integer and returns an integer vector of the same size. Where two integers are equally near, the even integer is returned. \\ \hline
+\bfseries Efficiency & float types: good \newline
+double types: good if AVX512DQ instruction set, otherwise poor \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4f a(1.0f, 1.5f, 2.0f, 2.5f);
+Vec4i b = round_to_int(a);  // b = (1,2,2,2)
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & 
+Vec4i round\_to\_int32(Vec2d) \newline
+Vec4i round\_to\_int32(Vec2d, Vec2d) \newline
+Vec4i round\_to\_int32(Vec4d) \newline
+Vec8i round\_to\_int32(Vec8d)\\ \hline
+\bfseries Defined for & Vec2d, Vec4d, Vec8d \\ \hline
+\bfseries Description & rounds double precision floating point numbers and returns vector of 32-bit integers. Where two integers are equally near, the even integer is returned. 
+\\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4d a(1.0, 1.5, 2.0, 2.5);
+Vec4i b = round_to_int32(a);  // b = (1,2,2,2)
+\end{lstlisting}
+\vspacesmall
+
+\label{truncateToInt}
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & 
+Vec4i truncatei(Vec4f) \newline
+Vec8i truncatei(Vec8f)\newline
+Vec16i truncatei(Vec16f)\newline
+Vec2q truncatei(Vec2d) \newline
+Vec4q truncatei(Vec4d) \newline
+Vec8q truncatei(Vec8d) \\ \hline
+\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Description & truncates floating point numbers towards zero and returns signed integer vector of the same size. \\ \hline
+\bfseries Efficiency & 
+float types: good \newline
+double types: good if AVX512DQ instruction set, otherwise poor  \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4f a(-1.6f, 1.5f, 2.0f, 2.9f);
+Vec4i b = truncate_to_int(a);  // b = (-1,1,2,2)
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & 
+Vec4i truncate\_to\_int32(Vec2d, Vec2d)\newline
+Vec4i truncate\_to\_int32(Vec4d)\newline
+Vec8i truncate\_to\_int32(Vec8d) \\ \hline
+\bfseries Defined for & Vec2d, Vec4d, Vec8d \\ \hline
+\bfseries Description & truncates double precision floating point numbers towards zero and returns signed vector of 32-bit integers. \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4d a(-1.5, 1.5, 2.0, 2.9);
+Vec4i b = truncate_to_int32(a);  // b = (-1,1,2,2)
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & 
+Vec4f to\_float(Vec4i) \newline
+Vec8f to\_float(Vec8i) \newline
+Vec16f to\_float(Vec16i) \\ \hline
+\bfseries Defined for & Vec4i, Vec8i, Vec16i \\ \hline
+\bfseries Description & converts signed 32-bit integers to single precision float \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(0, 1, 2, 3);
+Vec4f b = to_float(a);  // b = (0.0f, 1.0f, 2.0f, 3.0f)
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & 
+Vec4f to\_float(Vec4ui) \newline
+Vec8f to\_float(Vec8ui) \newline
+Vec16f to\_float(Vec16ui) \\ \hline
+\bfseries Defined for & Vec4ui, Vec8ui, Vec16ui \\ \hline
+\bfseries Description & converts unsigned integers to single precision float \\ \hline
+\bfseries Efficiency & good if AVX512VL instruction set. Poor otherwise \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4ui a(0, 1, 2, 3);
+Vec4f b = to_float(a);  // b = (0.0f, 1.0f, 2.0f, 3.0f)
+\end{lstlisting}
+\vspacesmall
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & 
+Vec4f to\_float(Vec2d) \newline
+Vec4f to\_float(Vec4d) \newline
+Vec8f to\_float(Vec8d) \\ \hline
+\bfseries Defined for & Vec2d, Vec4d, Vec8d \\ \hline
+\bfseries Description & converts floating point vectors from double precision to single precision. \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\vspacebig
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & 
+Vec4d to\_double(Vec4i) \newline
+Vec8d to\_double(Vec8i) \\ \hline
+\bfseries Defined for & Vec4i, Vec8i \\ \hline
+\bfseries Description & converts signed 32-bit integers to double precision float. The output vector is larger than the input vector. \\ \hline
+\bfseries Efficiency & medium \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(0, 1, 2, 3);
+Vec4d b = to_double(a);  // b = (0.0, 1.0, 2.0, 3.0)
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & 
+Vec2d to\_double(Vec2q x) \newline
+Vec4d to\_double(Vec4q x) \newline
+Vec8d to\_double(Vec8q x) \newline 
+Vec2d to\_double(Vec2uq x) \newline
+Vec4d to\_double(Vec4uq x) \newline
+Vec8d to\_double(Vec8uq x) \\ \hline
+\bfseries Defined for & Vec2q, Vec4q, Vec8q, Vec2uq, Vec4uq, Vec8uq \\ \hline
+\bfseries Description & converts signed or unsigned 64-bit integers to double precision float \\ \hline
+\bfseries Efficiency & good if AVX512DQ and AVX512VL instruction sets, otherwise poor. \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec2q a(0, 1);
+Vec2d b = to_double(a);  // b = (0.0, 1.0)
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & 
+Vec4d to\_double(Vec4f x) \newline
+Vec8d to\_double(Vec8f x) \\ \hline
+\bfseries Defined for & Vec4f, Vec8f \\ \hline
+\bfseries Description & converts floating point vectors from single precision to double precision. The total number of bits in the vector is doubled \\ \hline
+\bfseries Efficiency & good  \\ \hline
+\end{tabular}
+\vspacebig
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & 
+Vec2d to\_double\_low(Vec4i) \newline
+Vec2d to\_double\_high(Vec4i) \\ \hline
+\bfseries Defined for & Vec4i \\ \hline
+\bfseries Description & converts signed 32-bit integers to double precision float \\ \hline
+\bfseries Efficiency & medium \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(0, 1, 2, 3);
+Vec2d b = to_double_low(a);  // b = (0.0, 1.0)
+Vec2d c = to_double_high(a); // c = (2.0, 3.0)
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Method & concatenating vectors \\ \hline
+\bfseries Defined for & All 128-bit and 256-bit vector classes and corresponding boolean vector classes \\ \hline
+\bfseries Description & Two 128-bit vectors can be concatenated into one 256-bit vector of the corresponding type by calling a constructor. \newline
+Two 256-bit vectors can be concatenated into one 512-bit vector of the corresponding type by calling a constructor. \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(10,11,12,13);
+Vec4i b(20,21,22,23);
+Vec8i c(a, b);    // c = (10,11,12,13,20,21,22,23)
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Method & get\_low, get\_high \\ \hline
+\bfseries Defined for & all 256-bit and 512-bit vector classes \\ \hline
+\bfseries Description & One big vector can be split into two vectors of half the size by calling the methods get\_low and get\_high \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec8i a(10,11,12,13,14,15,16,17);
+Vec4i b = a.get_low();  // b = (10,11,12,13)
+Vec4i c = a.get_high(); // c = (14,15,16,17)
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & extend \\ \hline
+\bfseries Defined for & Vec16c, Vec16uc, Vec32c, Vec32uc, 
+Vec8s, Vec8us, Vec16s, Vec16us,
+Vec4i, Vec4ui, Vec8i, Vec8ui,  \\ \hline
+\bfseries Description & Extends integers to a larger number of bits per element.
+The total number of bits in the vector is doubled. 
+Unsigned integers are zero-extended, signed integers are sign-extended. \\ \hline
+\bfseries Efficiency & good for instruction sets that support the highest vector size, medium otherwise. \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec8s a(-2, -1, 0, 1, 2, 3, 4, 5);
+Vec8i b = extend(a);   // b = (-2, -1, 0, 1, 2, 3, 4, 5)
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & extend\_low, extend\_high \\ \hline
+\bfseries Defined for & Vec16c, Vec16uc, Vec32c, Vec32uc, Vec64c, Vec64uc,  
+Vec8s, Vec8us, Vec16s, Vec16us, Vec32s, Vec32us, 
+Vec4i, Vec4ui, Vec8i, Vec8ui, Vec16i, Vec16ui \\ \hline
+\bfseries Description & Extends integers to a larger number of bits per element.
+Only the lower or upper half of the vector is converted. The total number of bits in the vector is unchanged. 
+Unsigned integers are zero-extended, signed integers are sign-extended. \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec8s a(-2, -1, 0, 1, 2, 3, 4, 5);
+Vec4i b = extend_low(a);   // b = (-2, -1, 0, 1)
+Vec4i c = extend_high(a);  // c = (2, 3, 4, 5)
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & extend\_low, extend\_high \\ \hline
+\bfseries Defined for & Vec4f, Vec8f, Vec16f \\ \hline
+\bfseries Description & extends single precision floating point numbers to double precision. 
+Only the lower or upper half of the vector is converted. The total number of bits in the vector is unchanged.  \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4f a(1.0f, 1.1f, 1.2f, 1.3f);
+Vec2d b = extend_low(a);   // b = (1.0, 1.1)
+Vec2d c = extend_high(a);  // c = (1.2, 1.3)
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & compress \\ \hline
+\bfseries Defined for & Vec16s, Vec16us, Vec32s, Vec32us, 
+Vec8i, Vec8ui, Vec16i, Vec16ui,  
+Vec4q, Vec4uq, Vec8q, Vec8uq \\ \hline
+\bfseries Description & Reduces integers to a lower number of bits per element. 
+The total number of bits in the vector is halved. 
+There is no overflow check. The upper bits are simply cut off (wrap around). \\ \hline
+\bfseries Efficiency & good for instruction sets that support the highest vector size, medium otherwise . \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec8q a(10, 11, 12, 13, 14, 15, 16, 17);
+Vec8i b = compress(a); // b = (10, 11, 12, 13, 14, 15, 16, 17)
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & compress (with two vector parameters) \\ \hline
+\bfseries Defined for & Vec8s, Vec8us, Vec16s, Vec16us, Vec32s, Vec32us, 
+Vec4i, Vec4ui, Vec8i, Vec8ui, Vec16i, Vec16ui,  
+Vec2q, Vec2uq, Vec4q, Vec4uq, Vec8q, Vec8uq \\ \hline
+\bfseries Description & Packs two integer vectors into a single vector with the same total number of bits, by reducing each integer to a lower number of bits per element. 
+There is no overflow check. The upper bits are simply cut off (wrap around). \\ \hline
+\bfseries Efficiency & medium \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(10, 11, 12, 13);
+Vec4i b(20, 21, 22, 23);
+Vec8s c = compress(a, b); // c = (10,11,12,13,20,21,22,23)
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & compress (with two vector parameters)\\ \hline
+\bfseries Defined for & Vec2d, Vec4d, Vec8d \\ \hline
+\bfseries Description & reduces double precision floating point numbers to single precision. Two double precision vectors are packed into one single precision vector with the same total number of bits. \\ \hline
+\bfseries Efficiency & medium \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec2d a(1.0, 1.1);
+Vec2d b(2.0, 2.1);
+Vec4f c = compress(a, b); // c = (1.0f, 1.1f, 2.0f, 2.1f)
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & compress\_saturated (with two vector parameters) \\ \hline
+\bfseries Defined for & Vec8s, Vec8us, Vec16s, Vec16us, Vec32s, Vec32us, 
+Vec4i, Vec4ui, Vec8i, Vec8ui, Vec16i, Vec16ui,  
+Vec2q, Vec2uq, Vec4q, Vec4uq, Vec8q, Vec8uq \\ \hline
+
+\bfseries Description & Packs two integer vectors into a single vector with the same total number of bits, by reducing each integer to a lower number of bits per element. 
+Overflow and underflow saturates \\ \hline
+\bfseries Efficiency & medium (worse than compress in most cases) \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(10, 11, 12, 13);
+Vec4i b(20, 21, 22, 23);
+Vec8s c = compress_saturated(a, b);
+// c = (10,11,12,13,20,21,22,23)
+\end{lstlisting}
+\vspacesmall
+
+
+\section{Conversion between boolean vector types}\label{ConversionBetweenBooleanTypes}
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & to\_bits \\ \hline
+\bfseries Defined for & all boolean vectors \\ \hline
+\bfseries Description & converts a boolean vector to an integer with one bit per element \\ \hline
+\bfseries Efficiency & good for compact boolean vectors. Medium for broad boolean vectors \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i   a(10, 11, 12, 13);
+Vec4i   b(12, 11, 10,  9);
+Vec4ib  f = a > b;       // (false, false, true, true)
+uint8_t g = to_bits(f);  // = 0b1100
+// The order is not reversed, but in the comments above, 
+// the vector elements are listed in little endian order, 
+// while the binary number is written in big endian order.
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Method & load\_bits \\ \hline
+\bfseries Defined for & all boolean vectors \\ \hline
+\bfseries Description & converts an integer bit-field to a boolean vector \\ \hline
+\bfseries Efficiency & good for compact boolean vectors. Medium for broad boolean vectors \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+uint8_t a = 0b11000010;   // binary number
+Vec8fb  b;                // boolean vector
+b.load_bits(a);
+// b = (false, true, false, false, false, false, true, true)
+// The order is not reversed, but in the comments above, 
+// the vector elements are listed in little endian order, 
+// while the binary number is written in big endian order.
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Method & conversion between boolean vectors of same size and element size \\ \hline
+\bfseries Defined for & 
+Vec4ib $\leftrightarrow$ Vec4fb \newline
+Vec8ib $\leftrightarrow$ Vec8fb \newline
+Vec16ib $\leftrightarrow$ Vec16fb \newline
+Vec2qb $\leftrightarrow$ Vec2db \newline
+Vec4qb $\leftrightarrow$ Vec4db \newline
+Vec8qb $\leftrightarrow$ Vec8db \\ \hline
+\bfseries Description & Boolean vectors for use with different types of vectors with the same bit size can be converted to each other. \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i  a(0,1,2,3);
+Vec4i  b(4,3,2,1);
+Vec4ib f = a > b;     // f = (false,false,false,true)
+Vec4fb g = Vec4fb(f); // g = (false,false,false,true)
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Method & conversion from boolean vectors to integer vectors of the same size and element size \\ \hline
+\bfseries Defined for & broad boolean vectors only.  \\ \hline
+\bfseries Description & broad boolean vectors can be converted to integer vectors of the same size and bit size. The result will be -1 for true and 0 for false.\newline
+Avoid this method if compact boolean vectors may be used.\newline
+Conversion the other way, e.g. from Vec4i to Vec4ib is possible for broad boolean vectors
+ if the input vector contains -1 for true and 0 for false, but the result is implementation dependent and possibly wrong and inconsistent if the input vector contains any other values than 0 and -1. To prevent errors, it is recommended to use a comparison instead for converting an integer vector to a boolean vector.  \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// This example works only for broad boolean vectors
+Vec4i  a(0,1,2,3);
+Vec4i  b(4,3,2,1);
+Vec4ib f = a > b;     // f = (false,false,false,true)
+Vec4i  g = Vec4i(f);  // g = (0, 0, 0, -1)
+\end{lstlisting}
+\vspacesmall
+
+
+\end{document}

@@ -1,0 +1,923 @@
+% chapter included in vclmanual.tex
+\documentclass[vcl_manual.tex]{subfiles}
+\begin{document}
+
+
+\chapter{Operators}\label{chap:Operators}
+
+\section{Arithmetic operators}
+
+\flushleft
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Operator & \texttt{+, ++, +=} \\ \hline
+\bfseries Defined for & all integer and floating point vector classes \\ \hline
+\bfseries Description & addition \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(10, 11, 12, 13);
+Vec4i b(20, 21, 22, 23);
+Vec4i c = a + b;           // c = (30, 32, 34, 36)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Operator & \texttt{-, --, -=,} unary \texttt{-} \\ \hline
+\bfseries Defined for & all integer and floating point vector classes \\ \hline
+\bfseries Description & subtraction \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(10, 11, 12, 13);
+Vec4i b(20, 21, 22, 23);
+Vec4i c = a - b;           // c = (-10, -10, -10, -10)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Operator & \texttt{*, *=} \\ \hline
+\bfseries Defined for & all integer and floating point vector classes \\ \hline
+\bfseries Description & multiplication \\ \hline
+\bfseries Efficiency & 8 bit integers: poor \newline
+16 bit integers: good \newline
+32 bit integers: good for SSE4.1 and later instruction set, poor otherwise \newline
+64 bit integers: good for AVX512DQ instruction set, poor otherwise \newline
+float: good \newline
+double: good
+ \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(10, 11, 12, 13);
+Vec4i b(20, 21, 22, 23);
+Vec4i c = a * b;           // c = (200, 231, 264, 299)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Operator & \texttt{/, /=}  (floating point) \\ \hline
+\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Description & division \\ \hline
+\bfseries Efficiency & medium \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4f a(1.0f, 1.1f, 1.2f, 1.3f);
+Vec4f b(2.0f, 2.1f, 2.2f, 2.3f);
+Vec4f c = a / b;  // c = (0.500f, 0.524f, 0.545f, 0.565f)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Operator & \texttt{/, /=}  (integer vector divided by scalar) \\ \hline
+\bfseries Defined for & all classes of 8-bit, 16-bit and 32-bit integers, signed and unsigned. Not available for 64-bit integers \\ \hline
+\bfseries Description & division by scalar. Results are truncated to integer. All elements are divided by the same divisor. See page \pageref{IntegerDivision} for explanation
+ \\ \hline
+\bfseries Efficiency & poor \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(10, 11, 12, 13);
+int   b = 3;
+Vec4i c = a / b;  // c = (3, 3, 4, 4)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Operator & \texttt{/, /=}  (integer vector divided by constant) \\ \hline
+\bfseries Defined for & all classes of 8-bit, 16-bit and 32-bit integers, signed and unsigned. Not available for 64-bit integers \\ \hline
+\bfseries Description & division by compile-time constant. All elements are divided by the same divisor. See page \pageref{IntegerDivision} for explanation \\ \hline
+\bfseries Efficiency & medium (better than division by scalar variable). \newline Good if divisor is a power of 2 \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example, signed:
+Vec4i  a(10, 11, 12, 13);
+Vec4i  b = a / const_int(3);  // b = (3, 3, 4, 4)
+// Example, unsigned:
+Vec4ui c(10, 11, 12, 13);
+Vec4ui d = c / const_uint(3); // d = (3, 3, 4, 4)
+\end{lstlisting}
+
+
+\section{Logic operators} \label{LogicOperators}
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Operator & \textless\textless, \textless\textless= \\ \hline
+\bfseries Defined for & all integer vector classes \\ \hline
+\bfseries Description & bit shift left. All vector elements are shifted by the same amount. \newline
+Shifting left by n is a fast way of multiplying by $2^n$ \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(10, 11, 12, 13);
+Vec4i b = a << 2;         // b = (40, 44, 48, 52)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Operator & \textgreater\textgreater, \textgreater\textgreater= \\ \hline
+\bfseries Defined for & all integer vector classes \\ \hline
+\bfseries Description & bit shift right. All vector elements are shifted by the same amount.\newline
+Unsigned integers use logical shift. \newline
+Signed integers use arithmetic shift (i.e. the sign bit is copied). \newline
+Shifting unsigned right by n is a fast way of dividing by $2^n$ 
+ \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(10, 11, 12, 13);
+Vec4i b = a >> 2;         // b = (2, 2, 3, 3)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Operator & == \\ \hline
+\bfseries Defined for & all vector classes \\ \hline
+\bfseries Description & test if equal. Result is a boolean vector \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i  a(10, 11, 12, 13);
+Vec4i  b(14, 13, 12, 11);
+Vec4ib c = a == b;    // c = (false, false, true, false)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Operator & != \\ \hline
+\bfseries Defined for & all vector classes \\ \hline
+\bfseries Description & test if not equal. Result is a boolean vector \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i  a(10, 11, 12, 13);
+Vec4i  b(14, 13, 12, 11);
+Vec4ib c = a != b;    // c = (true, true, false, true)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Operator & \textgreater \\ \hline
+\bfseries Defined for & all integer and floating point vector classes \\ \hline
+\bfseries Description & test if bigger. Result is a boolean vector \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i  a(10, 11, 12, 13);
+Vec4i  b(14, 13, 12, 11);
+Vec4ib c = a > b;     // c = (false, false, false, true)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Operator & \textgreater= \\ \hline
+\bfseries Defined for & all integer and floating point vector classes \\ \hline
+\bfseries Description & test if bigger or equal. Result is a boolean vector \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i  a(10, 11, 12, 13);
+Vec4i  b(14, 13, 12, 11);
+Vec4ib c = a >= b;     // c = (false, false, true, true)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Operator & \textless \\ \hline
+\bfseries Defined for & all integer and floating point vector classes \\ \hline
+\bfseries Description & test if smaller. Result is a boolean vector \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i  a(10, 11, 12, 13);
+Vec4i  b(14, 13, 12, 11);
+Vec4ib c = a < b;       // c = (true, true, false, false)
+\end{lstlisting}
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Operator & \textless= \\ \hline
+\bfseries Defined for & all integer and floating point vector classes \\ \hline
+\bfseries Description & test if smaller or equal. Result is a boolean vector \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i  a(10, 11, 12, 13);
+Vec4i  b(14, 13, 12, 11);
+Vec4ib c = a <= b;      // c = (true, true, true, false)
+\end{lstlisting}
+
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Operator & \&, \&= \\ \hline
+\bfseries Defined for & all vector classes \\ \hline
+\bfseries Description & bitwise and \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(10, 11, 12, 13);
+Vec4i b(20, 21, 22, 23);
+Vec4i c = a & b;         // c = (0, 1, 4, 5)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Operator & \texttt{$\vert$, $\vert=$} \\ \hline
+\bfseries Defined for & all vector classes \\ \hline
+\bfseries Description & bitwise or \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(10, 11, 12, 13);
+Vec4i b(20, 21, 22, 23);
+Vec4i c = a | b;         // c = (30, 31, 30, 31)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Operator & \textasciicircum \\ \hline
+\bfseries Defined for & all vector classes \\ \hline
+\bfseries Description & bitwise exclusive or \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(10, 11, 12, 13);
+Vec4i b(20, 21, 22, 23);
+Vec4i c = a ^ b;         // c = (30, 30, 26, 26)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Operator & $\sim$ \\ \hline
+\bfseries Defined for & all vector classes \\ \hline
+\bfseries Description & bitwise not \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(10, 11, 12, 13);
+Vec4i b = ~a;            // b = (-11, -12, -13, -14)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Operator & ! \\ \hline
+\bfseries Defined for & all integer and floating point vector classes \\ \hline
+\bfseries Description & logical not. Result is a boolean vector \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i  a(-1, 0, 1, 2);
+Vec4ib b = !a;          // b = (false,true,false,false)
+\end{lstlisting}
+
+%\indenton  % undo flushleft
+
+\section{Integer division} \label{IntegerDivision}
+
+There are no instructions in the x86 instruction set extensions that are useful for integer vector division, and such instructions might be quite slow if they existed. Therefore, the vector class library is using an algorithm for fast integer division. The basic principle of this algorithm can be expressed in this formula:
+\vspacesmall \newline
+	$a / b \approx a * (2^n / b) >> n$ \newline
+\vspacesmall
+This calculation goes through the following steps:
+
+\begin{enumerate}
+  \item find a suitable value for n
+  \item calculate $2^n / b$
+  \item calculate necessary corrections for rounding errors
+  \item do the multiplication and shift-right, and apply corrections for rounding errors  
+\end{enumerate}
+
+This formula is advantageous if multiple numbers are divided by the same divisor b. Steps 1, 2 and 3 need only be done once while step 4 is repeated for each value of the dividend a. The mathematical details are described in the file vectori128.h. (See also T. Granlund and P. L. Montgomery: Division by Invariant Integers Using Multiplication, Proceedings of the SIGPLAN 1994 Conference on Programming Language Design and Implementation)
+\vspacesmall
+
+The implementation in the vector class library uses various variants of this method with appropriate corrections for rounding errors to get the exact result truncated towards zero.
+
+The way to use this in your code depends on whether the divisor b is a variable or constant, and whether the same divisor is applied to multiple vectors. This is illustrated in the following examples:
+
+\begin{lstlisting}[frame=none]
+// Division example A:
+// A variable divisor is applied to one vector
+Vec4i a(10, 11, 12, 13);// dividend is an integer vector
+int   b = 3;            // divisor is an integer variable
+Vec4i c = a / b;        // result c = (3, 3, 4, 4)
+\end{lstlisting}
+
+\begin{lstlisting}[frame=none]
+// Division example B:
+// The same divisor is applied to multiple vectors
+int b = 3;              // divisor
+Divisor_i divb(b);      // this object contains the results
+                        // of calculation steps 1, 2, and 3
+for (...) {             // loop through multiple vectors
+    Vec4i a = ...       // get dividend
+    a = a / divb;       // do step 4 of the division
+    ...                 // store results
+}
+\end{lstlisting}
+
+\begin{lstlisting}[frame=none]
+// Division example C:
+// The divisor is a constant, known at compile time
+Vec4i a(10, 11, 12, 13);     // dividend is integer vector
+Vec4i c = a / const_int(3);  // result c = (3, 3, 4, 4)
+\end{lstlisting}
+
+
+Explanation:
+
+The class \codei{Divisor\_i} in example B takes care of the calculation steps 1, 2 and 3 in the algorithm described above. The overloaded \codei{/} operator takes a vector on the left hand side and an object of class \codei{Divisor\_i} on the right hand side. This object is created before the loop with the divisor as parameter to the constructor. We are saving time by doing this time-consuming calculation only once while step 4 in the calculation is done multiple times inside the loop by \codei{a = a / divb;}
+\vspacesmall
+
+In example A, we are also creating an object of class \codei{Divisor\_i}, but this is done implicitly. The compiler sees an integer on the right hand side of the \codei{/} operator where it needs an object of class \codei{Divisor\_i}, and therefore converts the integer \codei{b} to such an object by calling the constructor \codei{Divisor\_i}(int).
+
+\vspacesmall
+The following divisor classes are available:
+
+\vspacesmall
+\begin{tabular}{|p{50mm}|p{50mm}|}
+\hline
+\bfseries Dividend vector type & \bfseries Divisor class required \\ \hline
+Vec16c, Vec32c , Vec64c & Divisor\_s \\ \hline
+Vec16uc, Vec32uc, Vec64uc & Divisor\_us \\ \hline
+Vec8s, Vec16s , Vec32s & Divisor\_s \\ \hline
+Vec8us, Vec16us , Vec32us & Divisor\_us \\ \hline
+Vec4i, Vec8i, Vec16i & Divisor\_i \\ \hline
+Vec4ui, Vec8ui, Vec16ui & Divisor\_ui \\ \hline
+\end{tabular}
+\vspacesmall
+
+If the divisor is a constant and the value is known at compile time, then we can use the method in example C. The implementation here uses macros and templates to do the calculation steps 1, 2 and 3 at compile time rather than at execution time. This makes the code even faster. The expression to put on the right-hand side of the \codei{/} operator looks as follows:
+
+\vspacesmall
+\begin{tabular}{|p{50mm}|p{50mm}|}
+\hline
+\bfseries Dividend vector type & \bfseries Divisor expression \\ \hline
+Vec16c, Vec32c, Vec64c & const\_int \\ \hline
+Vec16uc, Vec32uc, Vec64uc & const\_uint \\ \hline
+Vec8s, Vec16s, Vec32s & const\_int \\ \hline
+Vec8us, Vec16us, Vec32us & const\_uint \\ \hline
+Vec4i, Vec8i, Vec16i & const\_int \\ \hline
+Vec4ui, Vec8ui, Vec16ui & const\_uint \\ \hline
+\end{tabular}
+\vspacesmall
+
+The compiler will generate an error message if the parameter to \codei{const\_int} or \codei{const\_uint} is not a valid compile-time constant. (A valid compile time constant can contain integer literals and operators, as well as macros that are expanded to compile time constants, but not ordinary function calls).
+\vspacesmall
+
+A further advantage of the method in example C is that the code is able to use different methods for different values of the divisor. The division is particularly fast if the divisor is a power of 2. Make sure to use \codei{const\_int} or \codei{const\_uint} on the right hand side of the \codei{/} operator if you are dividing by 2, 4, 8, 16, etc.
+\vspacesmall
+
+Division is faster for vectors of 16-bit integers than for vectors of 8-bit or 32-bit integers. There is no support for division of vectors of 64-bit integers. Unsigned division is faster than signed division.
+
+
+\chapter{Functions}\label{chap:Functions}
+
+\section{Integer functions}
+\flushleft
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & horizontal\_add \\ \hline
+\bfseries Defined for & all integer vector classes \\ \hline
+\bfseries Description & calculates the sum of all vector elements \\ \hline
+\bfseries Efficiency & medium \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(10, 11, 12, 13);
+int   b = horizontal_add(a);  // b = 46
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & horizontal\_add\_x \\ \hline
+\bfseries Defined for & all 8-bit, 16-bit and 32-bit integer vector classes \\ \hline
+\bfseries Description & calculates the sum of all vector elements. The sum is calculated with a higher number of bits to avoid overflow
+ \\ \hline
+\bfseries Efficiency & medium (slower than horizontal\_add) \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i   a(10, 11, 12, 13);
+int64_t b = horizontal_add_x(a);  // b = 46
+\end{lstlisting}
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & horizontal\_min, horizontal\_max \\ \hline
+\bfseries Defined for & all integer vector classes \\ \hline
+\bfseries Description & Returns the lowest or highest element in a vector.\newline VCL version 2.00 or later \\ \hline
+\bfseries Efficiency & medium \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(1, 8, -5, 3);
+int   b = horizontal_min(a);  // b = -5
+int   c = horizontal_max(a);  // c =  8
+\end{lstlisting}
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & add\_saturated\\ \hline
+\bfseries Defined for & all 8-bit, 16-bit and 32-bit integer vector classes \\ \hline
+\bfseries Description & same as operator +. Overflow is handled by saturation rather than wrap-around \\ \hline
+\bfseries Efficiency & fast for 8-bit and 16-bit integers. Medium for 32-bit integers \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(0x10000000,  0x20000000,  0x30000000,  0x40000000);
+Vec4i b(0x30000000,  0x40000000,  0x50000000,  0x60000000);
+Vec4i c = add_saturated(a, b);  
+//  c = (0x40000000,  0x60000000,  0x7FFFFFFF,  0x7FFFFFFF)
+Vec4i d = a + b;
+//  d = (0x40000000,  0x60000000, -0x80000000, -0x60000000)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & sub\_saturated\\ \hline
+\bfseries Defined for & all 8-bit, 16-bit and 32-bit integer vector classes \\ \hline
+\bfseries Description & same as operator -. Overflow is handled by saturation rather than wrap-around \\ \hline
+\bfseries Efficiency & fast for 8-bit and 16-bit integers. Medium for 32-bit integers \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(-0x10000000,-0x20000000,-0x30000000,-0x40000000);
+Vec4i b( 0x30000000, 0x40000000, 0x50000000, 0x60000000);
+Vec4i c = sub_saturated(a, b);  
+//  c = (-0x40000000,-0x60000000,-0x80000000,-0x80000000)
+Vec4i d = a - b;
+//  d = (-0x40000000,-0x60000000,-0x80000000, 0x60000000)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & max \\ \hline
+\bfseries Defined for & all integer vector classes \\ \hline
+\bfseries Description & returns the biggest of two values \\ \hline
+\bfseries Efficiency & medium for 64-bit integers with instruction sets lower than SSE4.2. Fast otherwise \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+Vec4i a(10, 11, 12, 13);
+Vec4i b(14, 13, 12, 11);
+Vec4i c = max(a, b);  // c = (14, 13, 12, 13)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & min \\ \hline
+\bfseries Defined for & all integer vector classes \\ \hline
+\bfseries Description & returns the smallest of two values \\ \hline
+\bfseries Efficiency & medium for 64-bit integers with instruction sets lower than SSE4.2. Fast otherwise \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(10, 11, 12, 13);
+Vec4i b(14, 13, 12, 11);
+Vec4i c = min(a, b);  // c = (10, 11, 12, 11)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & abs \\ \hline
+\bfseries Defined for & all signed integer vector classes \\ \hline
+\bfseries Description & calculates the absolute value \\ \hline
+\bfseries Efficiency & medium \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(-1, 0, 1, 2);
+Vec4i b = abs(a);     // b = (1, 0, 1, 2)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & abs\_saturated \\ \hline
+\bfseries Defined for & all signed integer vector classes \\ \hline
+\bfseries Description & calculates the absolute value. Overflow saturates to make sure the result is never negative when the input is INT\_MIN
+ \\ \hline
+\bfseries Efficiency & medium (slower than abs) \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(-0x80000000, -1, 0, 1);
+Vec4i b = abs_saturated(a);  // b=( 0x7FFFFFFF,1,0,1)
+Vec4i c = abs(a);            // c=(-0x80000000,1,0,1)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & rotate\_left(vector, int) \\ \hline
+\bfseries Defined for & all signed integer vector classes \\ \hline
+\bfseries Description & rotates the bits of each element. Use a negative count to rotate right \\ \hline
+\bfseries Efficiency & 8 bit: poor \newline
+16 bit: medium \newline
+32 and 64 bit: good for AVX512DQ instruction set, medium otherwise.
+ \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(0x12345678, 0x0000FFFF, 0xA000B000, 0x00000001);
+Vec4i b = rotate_left(a, 8);  
+// b = (0x34567812, 0x00FFFF00, 0x00B000A0, 0x00000100)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & 
+vector shift\_bytes\_up\textless n\textgreater(vector)\newline
+vector shift\_bytes\_down\textless n\textgreater(vector)
+ \\ \hline
+\bfseries Defined for & Vec16c, Vec32c, Vec64c \\ \hline
+\bfseries Description & shifts the bytes of a vector up or down and inserts zeroes at the vacant places \\ \hline
+\bfseries Efficiency &
+Vec16c: Good for SSSE3, medium otherwise \newline
+Vec32c: Good for AVX2, medium otherwise \newline
+Vec64c: Good for AVX512BW, medium otherwise \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec16c a(10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25);
+Vec16c b = shift_bytes_up<5>(a);
+// b = (0,0,0,0,0,10,11,12,13,14,15,16,17,18,19,20)
+\end{lstlisting}
+
+
+
+\section{Floating point simple functions}
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & horizontal\_add \\ \hline
+\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Description & calculates the sum of all vector elements \\ \hline
+\bfseries Efficiency & medium \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4f a(1.0f, 1.1f, 1.2f, 1.3f);
+float b = horizontal_add(a);  // b = 4.6
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & max \newline min \\ \hline
+\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Description & returns the biggest/smallest of two values \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+
+\codei{max(a,b)} is equivalent to \codei{a > b ? a : b }\\
+\codei{min(a,b)} is equivalent to \codei{a < b ? a : b }\\
+
+These functions will not return a NAN if the first parameter is NAN.\\
+These functions make no distinction between 0 and -0.
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4f a(1.0f, 1.1f, 1.2f, 1.3f);
+Vec4f b(1.4f, 1.3f, 1.2f, 1.1f);
+Vec4f c = max(a, b);         // c = (1.4f, 1.3f, 1.2f, 1.3f)
+\end{lstlisting}
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & maximum \newline minimum \\ \hline
+\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Description & returns the biggest/smallest of two values \\ \hline
+\bfseries Efficiency & good, but slower than max / min \\ \hline
+\end{tabular}
+
+These functions are similar to max and min, but sure to propagate NAN values.\\
+The sign of zero is ignored unless SIGNED\_ZERO is defined.
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & horizontal\_min, horizontal\_max \\ \hline
+\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Description & Returns the lowest or highest element in a vector.\newline
+NANs are propagated. The sign of zero is ignored. \newline
+VCL version 2.00 or later \\ \hline
+\bfseries Efficiency & medium \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(1, 8, -5, 3);
+int   b = horizontal_min(a);  // b = -5
+int   c = horizontal_max(a);  // c =  8
+\end{lstlisting}
+
+
+\vspacebig
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & abs \\ \hline
+\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Description & gets the absolute value \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4f a(-1.0f, 0.0f, 1.0f, 2.0f);
+Vec4f b = abs(a);  // b = (1.0f, 0.0f, 1.0f, 2.0f)
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & change\_sign\textless i0, i1, ...\textgreater(vector) \\ \hline
+\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Description & changes sign of selected vector elements.\newline
+Each template parameter is 1 for changing sign of the corresponding element, and 0 for no change. \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4f a(10.0f, 11.0f, -12.0f, 13.0f);
+Vec4f b = change_sign<0,1,1,0>(a); // b = (10.f, -11.f, 12.f, 13.f)
+\end{lstlisting}
+\vspacesmall
+
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & sign\_combine(vector a, vector b) \\ \hline
+\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Description & Returns the value of a, with the sign inverted if b has its sign bit set.\newline
+Corresponds to select(sign\_bit(b), -a, a) \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4f  a(-2.0f, -1.0f,  0.0f,  1.0f);
+Vec4f  b(-10.f,  0.0f, -20.f,  30.f);
+Vec4f  c = sign_combine(a, b);  // c = (2.0f, -1.0f, -0.0f, 1.0f)
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & sign\_bit \\ \hline
+\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Description & returns a boolean vector with true for elements that have the sign bit set, including -0.0, -INF, and -NAN \\ \hline
+\bfseries Efficiency & medium \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4f  a(-1.0f, 0.0f, 1.0f, 2.0f);
+Vec4fb b = sign_bit(a);  // b = (true, false, false, false)
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & sqrt \\ \hline
+\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Description & calculates the square root \\ \hline
+\bfseries Efficiency & poor \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4f a(0.0f, 1.0f, 2.0f, 3.0f);
+Vec4f b = sqrt(a);  // b = (0.000f, 1.000f, 1.414f, 1.732f)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & square \\ \hline
+\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Description & calculates the square \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4f a(0.0f, 1.0f, 2.0f, 3.0f);
+Vec4f b = square(a);  // b = (0.0f, 1.0f, 4.0f, 9.0f)
+\end{lstlisting}
+
+
+\label{powVectorInt}
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & pow(vector x, int n) \\ \hline
+\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Description & raises all vector elements to the same integer power. 
+Will generate a compiler error if n is floating point and vectormath\_exp.h is not included, or in general if n is not of type int.
+See page \pageref{ExpLogFunctions} for pow with floating point exponent.
+ \\ \hline
+\bfseries Precision & slightly imprecise for high values of n due to accumulation of rounding errors \\ \hline
+\bfseries Efficiency & medium \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4f a(0.0f, 1.0f, 2.0f, 3.0f);
+int   b = 3;
+Vec4f c = pow(a, b);  // c = (0.0f, 1.0f, 8.0f, 27.0f)
+\end{lstlisting}
+
+
+\label{powConstVectorInt}
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & pow\_const(vector x, const int n) \\ \hline
+\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Description & raises all vector elements to the same integer power n, where n is a compile-time constant \\ \hline
+\bfseries Precision & slightly imprecise for high values of n due to accumulation of rounding errors \\ \hline
+\bfseries Efficiency & medium, often better than pow(vector, int) \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4f a(0.0f, 1.0f, 2.0f, 3.0f);
+Vec4f c = pow_const(a, 3);  // c = (0.0f, 1.0f, 8.0f, 27.0f)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & round \\ \hline
+\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Description & round to nearest integer (even value if two values are equally near). The value is returned as a floating point vector.\newline
+See also roundi and round\_to\_int32 on page \pageref{roundToInt}. \\ \hline
+\bfseries Efficiency & good if SSE4.1 or higher instruction set \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4f a(1.0f, 1.4f, 1.5f, 1.6f)
+Vec4f b = round(a);   // b = (1.0f, 1.0f, 2.0f, 2.0f)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & truncate \\ \hline
+\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Description & truncates number towards zero. The value is returned as a floating point vector. \newline
+See also truncatei and truncate\_to\_int32 on page \pageref{truncateToInt}. \\ \hline
+\bfseries Efficiency & good if SSE4.1 or higher instruction set \\ \hline
+\bfseries Note & may be slightly inaccurate for x \textgreater{} $10^7$ if instruction set is less than SSE4.1 \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4f a(1.0f, 1.5f, 1.9f, 2.0f)
+Vec4f b = truncate(a);   // b = (1.0f, 1.0f, 1.0f, 2.0f)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & floor \\ \hline
+\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Description & rounds number towards $-\infty$. The value is returned as a floating point vector \\ \hline
+\bfseries Efficiency & good if SSE4.1 or higher instruction set \\ \hline
+\bfseries Note & may be slightly inaccurate for x \textgreater{} $10^7$ if instruction set is less than SSE4.1 \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4f a(-0.5f, 1.5f, 1.9f, 2.0f)
+Vec4f b = floor(a);   // b = (-1.0f, 1.0f, 1.0f, 2.0f)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & ceil \\ \hline
+\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Description & rounds number towards $+\infty$. The value is returned as a floating point vector \\ \hline
+\bfseries Efficiency & good if SSE4.1 or higher instruction set \\ \hline
+\bfseries Note & may be slightly inaccurate for x \textgreater{} $10^7$ if instruction set is less than SSE4.1 \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4f a(-0.5f, 1.1f, 1.9f, 2.0f)
+Vec4f b = ceil(a);   // b = (0.0f, 2.0f, 2.0f, 2.0f)
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & approx\_recipr \\ \hline
+\bfseries Defined for & Vec4f, Vec8f, Vec16f \\ \hline
+\bfseries Description & fast approximate calculation of reciprocal  \\ \hline
+\bfseries Precision & the relative accuracy depends on the instruction set:\newline
+Default: $2^{-11}$\newline
+AVX512F: $2^{-14}$\newline
+AVX512ER: full precision \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4f a(1.5f, 2.0f, 3.0f, 4.0f)
+Vec4f b(0.5f, 1.0f, 0.5f, 1.0f)
+Vec4f c = a * approx_recipr(b);  // c approximates a/b
+\end{lstlisting}
+
+
+\vspacesmall
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & approx\_rsqrt \\ \hline
+\bfseries Defined for & Vec4f, Vec8f, Vec16f \\ \hline
+\bfseries Description & reciprocal square root. Fast approximate calculation of value to the power of -0.5 \\ \hline
+\bfseries Precision & the relative accuracy depends on the instruction set:\newline
+Default: $2^{-11}$\newline
+AVX512F: $2^{-14}$\newline
+AVX512ER: full precision \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4f a(1.0f, 2.0f, 3.0f, 4.0f)
+Vec4f b = approx_rsqrt(a) * a;  // b approximates sqrt(a)
+\end{lstlisting}
+\vspacesmall
+
+
+\end{document}

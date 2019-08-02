@@ -1,0 +1,84 @@
+% chapter included in vclmanual.tex
+\documentclass[vcl_manual.tex]{subfiles}
+\begin{document}
+
+
+\section{Floating point behavior details}
+\label{FloatingPointBehavior}
+
+The Vector Class Library is generally conforming to the new IEEE 754-2019 Standard for Floating-Point Arithmetic, but some compromises have been necessary for the purpose of vector processing and for better performance. The deviations from the standard are discussed below.
+\vspacesmall
+
+\begin{description}
+
+\item[Subnormal numbers.]
+Subnormal numbers (also called denormal numbers) are numerically extremely small floating point numbers where the exponent is below the normal range. Some microprocessors are handling subnormal numbers in a very inefficient way that is more than a hundred times slower than for normal floating point numbers. You may call the function \codei{no\_subnormals()} to prevent this and treat subnormal numbers as zero. Some of the mathematical functions in VCL always treat subnormal numbers as zero for reasons of performance. This includes logarithm, exponential, and power functions.
+
+\item[Signed zero.]
+Signed zero is a controversial issue. The floating point standard defines two different zeroes: +0.0 and -0.0.
+The two zeroes are equal, but still distinguishable. Some of the functions may return +0.0 where the standard requires -0.0.\\
+You may {} \codei{\#define SIGNED\_ZERO} {} if you want the sign of zero to conform to the
+IEEE 754-2019 standard, though this may slow down performance a little.
+\codei{SIGNED\_ZERO} may affect several functions, including
+\codei{round}, \codei{truncate}, \codei{floor}, \codei{ceil}, 
+\codei{maximum}, \codei{minimum}, \codei{cbrt}, \codei{pow\_ratio}, \codei{expm1}, \codei{log1p}. \\
+This feature is not supported in version 1.xx of VCL.
+
+\item[No exception trapping.] \label{NoExceptionTrapping}
+Floating point errors are traditionally detected by trapping errors or relying on an \codei{errno} variable. These methods are not well suited for vector processing and out-of-order processing. This is explained in the document \href{https://www.agner.org/optimize/nan_propagation.pdf}{"NAN propagation versus fault trapping in floating point code", Agner Fog, 2019}.
+\vspacesmall
+
+The Vector Class Library does not support fault trapping, and it does not indicate exceptions in a variable such as the traditional \codei{errno}. It is not recommended to turn on floating point exceptions because this can cause inconsistent behavior, such as traps for exceptions in not-taken branches. Do not attempt to trap numerical errors in \codei{try/catch} blocks.
+\vspacesmall
+
+Instead, the vector class library indicates floating point exceptions by producing INF or NAN codes in the individual vector element that produced the fault.
+The INF and NAN codes will propagate to the end result of a series of calculations when certain conditions are satisfied. The most efficient way of detecting floating point errors is to look for INF and NAN codes in the result.
+\vspacesmall
+
+Conditions where INF and NAN codes are not propagated are discussed at page  \pageref{FloatingPointErrors}
+\vspacesmall
+
+Do not use the option -ffast-math or -ffinite-math-only on Gnu and Clang compilers because this may disable the detection of INF and NAN.
+\vspacesmall
+
+\item[No signaling NANs.]
+Signaling NANs are special codes that will raise an exception when they are loaded from memory. Signaling NANs are rarely used in modern software. Signaling NANs should not be used in VCL because exception trapping is not supported.
+
+\item[NAN payload operations.]
+A NAN may contain additional information called a payload. This payload can propagate through a series of calculations to the end result. Some of the mathematical functions in VCL can put a payload into the NAN result in case of an error. This makes it possible to identify which function generated the NAN.
+\vspacesmall
+
+The \codei{nan..} and \codei{nan\_code} functions make it possible to set and get NAN payloads. The IEEE 754 standard does not specify what happens to the payload when converting between single and double precision, but experiments show that all microprocessors that use the binary floating point format will left-justify the payload. The \codei{nan..} and \codei{nan\_code} functions treat the NAN payload as a 22-bit left-justified unsigned integer in order to allow conversions between single and double precision. These functions deviate from the IEEE 754-2019 standard.
+
+\item[NAN propagation in maximum and minimum functions.]
+The \codei{max} and \codei{min} functions do not propagate NANs according to the 2008 version of the standard. This unfortunate situation is redressed in the  2019 revision of the standard. VCL offers two different versions of these functions:
+The \codei{max} and \codei{min} functions are equivalent to 
+\codei{a > b ? a : b} and 
+\codei{a < b ? a : b}, respectively. These functions return \codei{b} if \codei{a} is NAN. The slightly less efficient functions \codei{maximum} and \codei{minimum} are sure to propagate NANs, in accordance with the 2019 revision of the standard.
+
+\item[NAN propagation in pow function.]
+The standard specifies that pow(NAN,0) and pow(1,NAN) will give the result 1.0. The VCL implementation deviates from this and produces a NAN output in all cases where an input is NAN, in order to support reliable NAN propagation.
+
+\item[Function parameter range.]
+Some of the mathematical functions have internal overflow for extreme values of the input parameters. These functions have a limited input range because an extra branch to handle the extreme cases would reduce the overall performance. Limitations of the input range are mentioned in the listing of the individual functions.
+
+
+\end{description}
+
+
+
+
+
+
+
+
+
+
+
+
+
+\vspacesmall
+
+
+
+\end{document}

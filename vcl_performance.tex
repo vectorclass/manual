@@ -65,26 +65,26 @@ The vector class library has support for the following four compilers:
 This is a very popular compiler for Windows because it has a good and user friendly IDE (Integrated Development Environment) and debugger. Make sure you are compiling for the "unmanaged" version, i. e. \emph{not} using the .net common language runtime (CLR).
 \vspacesmall
 
-The Microsoft compiler optimizes reasonably well, but not as good as the other compilers, and the support for the latest instruction sets is incomplete.
+The Microsoft compiler optimizes reasonably well, but not as good as the other compilers. Support for the latest instruction sets is incomplete.
 \vspacesmall
 
 \textbf{Intel C++ compiler}\\
-The current version of Intel C++ compiler (version 19.0) cannot compile version 2.xx of VCL due to problems with \codei{constexpr} functions. Use version 1.xx of VCL instead with Intel compiler.\\
-The Intel compiler optimizes better than the Microsoft compiler. Intel also provides some of the best optimized function libraries for mathematical and other purposes. Unfortunately, the Intel compilers and some of the function libraries favor Intel CPUs, and produce code that runs slower than necessary on CPUs of any other brand than Intel. It is possible to work around this limitation for the Intel function libraries and in some cases also for the compiler. 
+The current version of Intel C++ compiler (version 19.0) cannot compile version 2.xx of VCL due to problems with \codei{constexpr} functions. Use version 1.xx of VCL instead if you need to use the Intel compiler.\\
+The Intel compiler optimizes better than the Microsoft compiler. Intel also provides some of the best optimized function libraries for mathematical and other purposes. Unfortunately, the Intel compilers and some of the function libraries favor Intel CPUs, and produce code that runs slower than necessary on CPUs of any other brand than Intel. It is possible to work around this limitation for the Intel function libraries and in some cases also for compiled functions. 
 See Agner Fog's \href{https://www.agner.org/optimize/blog/read.php?i=49}{blog} 
 and \href{https://www.agner.org/optimize/#manual_cpp}{C++ manual} 
 for details. Intel's compilers are available for Windows, Linux and Mac platforms.
 \vspacesmall
 
 \textbf{Gnu C++ compiler}\\
-This compiler produced very good optimizations in my tests. The g++ compiler is available for all x86 and x86-64 platforms. The math functions in the glibc library are sometimes not fully optimized, but this is not a problem if you are using the math functions in VCL.
+This compiler produced very good optimizations in my tests. The Gnu compiler (g++) is available for all x86 and x86-64 platforms. The math functions in the glibc library are sometimes not fully optimized, but this is not a problem if you are using the math functions in VCL.
 \vspacesmall
 
 \textbf{Clang C++ compiler}\\
-This compiler produced very good optimizations in my tests. The Clang compiler is available for all x86 and x86-64 platforms.
+This compiler produced the best optimized code in my tests. The Clang compiler is available for all x86 and x86-64 platforms. There are different versions of Clang available for the Windows platform. The version of Clang that comes as a plug in to Visual Studio is better than the version that comes with Cygwin64. Both versions can be used as command line tools.
 \vspacesmall
 
-My recommendation is to use the Gnu or Clang compiler for the final version of a program when performance is important. The Microsoft compiler may be a convenient aid in the development phase. The Intel compiler should not be used if the code may run on an AMD processor.
+My recommendation is to use the Clang or Gnu compiler for the release version of a program when performance is important. The Microsoft compiler may be a convenient aid in the development phase. The Intel compiler should not be used if the code may run on an AMD processor.
 \vspacesmall
 
 
@@ -263,10 +263,11 @@ int mydata[1000] __attribute__((aligned(32)));
 \vspacesmall
 
 It is always recommended to align large arrays for performance reasons if the code uses vectors. Unfortunately, it may be more complicated to align arrays that are allocated dynamically with operator \codei{new} or with container classes. 
-Older versions of the C++ standard do not specify how to make aligned memory allocation. Newer versions of C++ support alignment with \codei{std::align} (C++11) or \codei{std::aligned\_alloc} (C++17). Linux systems have the function \codei{posix\_memalign} but this method may not be portable to all platforms.
+Older versions of the C++ standard do not specify how to make aligned memory allocation. Newer versions of C++ support alignment with \codei{std::align} (C++11) or \codei{std::aligned\_alloc} (C++17). 
+The operator \codei{new} will align an array of vectors correctly under C++17.
 \vspacesmall
 
-If your compiler does not offer an appropriate method for aligning dynamically allocated memory then you may do the alignment yourself:
+If your compiler does not offer an appropriate method for aligning dynamically allocated memory then you may do the alignment manually:
 
 \begin{lstlisting}[frame=none]
 // Example of aligning memory
@@ -561,14 +562,14 @@ AVX512VBMI2 & future & Faster extract from 8-bit and 16-bit integer vectors \\ \
 \end{table}
 \vspacesmall
 
-The vector class library makes it possible to compile for different instruction sets from the same source code. Different versions are made simply by recompiling the code with different compiler options. The desired instruction set can be specified on the compiler command line as listed in table \ref{table:CommandLineOptions}.
+The vector class library makes it possible to compile for different instruction sets from the same source code. Different versions are made simply by recompiling the code with different compiler options. The instruction set to use in VCL can be specified on the compiler command line as listed in table \ref{table:CommandLineOptions}.
 
 \begin {table}[h]
 \caption{Command line options}
 \label{table:CommandLineOptions}
 \begin{tabular}{|p{26mm}|p{28mm}|p{28mm}|p{28mm}|p{28mm}|}
 \hline
-\bfseries Instruction set & \bfseries Gnu and Clang compiler & \bfseries Intel compiler Linux & \bfseries Intel compiler Windows & \bfseries MS compiler \\ \hline
+\bfseries Instruction set & \bfseries Gnu and Clang compiler & \bfseries Intel compiler Linux & \bfseries Intel compiler Windows & \bfseries MS compiler v. 16\\ \hline
 
 SSE2 & -msse2 & -msse2 & /arch:sse2 & /arch:sse2 \\ \hline
 SSE3 & -msse3 & -msse3 & /arch:sse3 & /arch:sse2 \newline /D\_\_SSE3\_\_ \\ \hline
@@ -576,15 +577,17 @@ SSSE3 & -mssse3 & -mssse3 & /arch:ssse3 & /arch:sse2 \newline /D\_\_SSSE3\_\_ \\
 SSE4.1 & -msse4.1 & -msse4.1 & /arch:sse4.1 & /arch:sse2 \newline /D\_\_SSE4\_1\_\_ \\ \hline
 SSE4.2 & -msse4.2 & -msse4.2 & /arch:sse4.2 & /arch:sse2 \newline /D\_\_SSE4\_2\_\_ \\ \hline
 AVX & -mavx \newline -fabi-version=0 & -mavx & /arch:avx & /arch:avx /DINSTRSET=7 \\ \hline
-XOP & -mavx \newline -mxop \newline -fabi-version=0 & not available & not available & /arch:avx \newline /D\_\_XOP\_\_ \\ \hline
-FMA4 & -mfma4 & not available & not available & not available \\ \hline
+XOP & -mavx \newline -mxop \newline -fabi-version=0 & not supported & not supported & /arch:avx \newline /D\_\_XOP\_\_ \\ \hline
+FMA4 & -mfma4 & not supported & not supported & not supported \\ \hline
 FMA3 & -mfma & -mfma & /Qfma & /DINSTRSET=7 \\ \hline
 AVX2 & -mavx2 \newline -fabi-version=0 & -mavx2 & /arch:avx2 & /arch:avx2 \newline /DINSTRSET=8 \\ \hline
-AVX512F & -mavx512f & -xCOMMON-AVX512 & /arch:COMMON-AVX512 & /DINSTRSET=9 \\ \hline
-AVX512ER & -mavx512er & -xMIC-AVX512 & /arch:MIC-AVX512 & /DINSTRSET=10 /D\_\_AVX512ER\_\_ \\ \hline
-AVX512VL/BW/ DQ & -mavx512vl -mavx512bw -mavx512dq & -mavx512vl -mavx512bw -mavx512dq & /arch:CORE-AVX512 & /DINSTRSET=10 \\ \hline
+AVX512F & -mavx512f & -xCOMMON-AVX512 & /arch:COMMON-AVX512 & not supported without AVX512DQ\\ \hline
+
+AVX512VL/BW/ DQ & -mavx512vl -mavx512bw -mavx512dq & -mavx512vl -mavx512bw -mavx512dq & /arch:CORE-AVX512 & /arch:avx2 /DINSTRSET=10 \\ \hline
 AVX512VBMI & -mavx512vbmi & -mavx512vbmi & ?? & /D \_\_AVX512VBMI\_\_ \\ \hline
 AVX512VBMI2 & -mavx512vbmi2 & -mavx512vbmi2 & ?? & /D \_\_AVX512VBMI2\_\_ \\ \hline
+AVX512ER & -mavx512er & -xMIC-AVX512 & /arch:MIC-AVX512 & /D\_\_AVX512ER\_\_ \\ \hline
+
 \end{tabular}
 \end{table}
 \vspacesmall
@@ -597,13 +600,13 @@ The FMA3 and FMA4 instruction sets are not always handled directly by the code i
 \vspacesmall
 
 It is recommended to specify compiler options that allow efficient code optimizations. Suitable options on Gnu and Clang compilers are
--O3 -fno-trapping-math -fno-math-errno.
+-O2 -fno-trapping-math -fno-math-errno.
 \vspacesmall
 
 There is no advantage in using the biggest vector classes unless the corresponding instruction set is specified, but it can be convenient to use these classes anyway if the same source code is compiled for multiple versions with different instruction sets. Each large vector will simply be split up into two or four smaller vectors when compiling for a lower instruction set.
 \vspacesmall
 
-It is recommended to make an automatic CPU dispatcher that detects at run time which instruction sets are supported by the actual CPU, and selects the best version of the code accordingly. For example, you may compile the code three times for three different instruction sets: SSE2, AVX2 and AVX512VL/BW/DQ. The CPU dispatcher will then set a function pointer to point to the appropriate version. You can use the function instrset\_detect (see below, page \pageref{instrsetDetect}) to detect the supported instruction set. The file dispatch\_example.cpp shows an example of how to make a CPU dispatcher that selects the appropriate code version. The critical part of the program is called through a function pointer. This function pointer initially points to the CPU dispatcher, which is activated the first time the function is called. The CPU dispatcher changes the function pointer to point to the best version of the code, and then continues in the selected code. The next time the function is called, the call goes directly to the right version of the code without calling the CPU dispatcher first. It is probably not necessary to make a branch for instruction sets prior to SSE2 because most computers today run 64-bit mode which includes SSE2.
+It is recommended to make an automatic CPU dispatcher that detects at run time which instruction sets are supported by the actual CPU, and selects the best version of the code accordingly. For example, you may compile the code three times for three different instruction sets: SSSE3, AVX2 and AVX512VL/BW/DQ. The CPU dispatcher will then set a function pointer to point to the appropriate version of the compiled code. You can use the function instrset\_detect (see below, page \pageref{instrsetDetect}) to detect the supported instruction set. The file dispatch\_example.cpp shows an example of how to make a CPU dispatcher that selects the appropriate code version. The critical part of the program is called through a function pointer. This function pointer initially points to the CPU dispatcher, which is activated the first time the function is called. The CPU dispatcher changes the function pointer to point to the best version of the code, and then continues in the selected code. The next time the function is called, the call goes directly to the right version of the code without calling the CPU dispatcher first. It is probably not necessary to make a branch for instruction sets prior to SSE2 because most computers today run 64-bit mode which includes SSE2.
 \vspacesmall
 
 There is an important restriction when you are combining code compiled for different instruction sets: Do not transfer any data as vector objects between different pieces of code that are compiled for different instruction sets, because the vectors may be represented differently under the different instruction sets. It is recommended to transfer the data as arrays instead between different parts of the program that are compiled for different instruction sets.
@@ -694,7 +697,7 @@ Function calls are most efficient when vectors are transferred in registers rath
 
 \item Use Linux or MacOS. Vector parameters are transferred in registers by default on these platforms. Vector function returns are transferred in registers in 64-bit mode.
 
-\item Use \codei{\_\_fastcall} in 64-bit Windows. The Clang and Microsoft compilers can transfer vector parameters and vector returns in registers when \codei{\_\_fastcall} is used on the function declaration. See the example on page \pageref{examplePolynomialVectorcall}.
+\item Use \codei{\_\_vectorcall} in 64-bit Windows. The Clang and Microsoft compilers can transfer vector parameters and vector returns in registers when \codei{\_\_vectorcall} is used on the function declaration. See the example on page \pageref{examplePolynomialVectorcall}.
 
 \item Use a vector size that fits the instruction set, according to table \ref{table:integerVectorClasses} on page \pageref{table:integerVectorClasses}.
 

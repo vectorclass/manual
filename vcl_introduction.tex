@@ -147,7 +147,7 @@ I have previously sold commercial licenses to VCL. Now, I have decided for a mor
 \chapter{The basics}\label{chap:TheBasics}
 \section{How to compile} \label{HowToCompile}
 
-Copy the latest version of the header files (*.h) to the same folder as your C++ source files. The header files from any add-on package should be included too if needed.
+Copy the latest version of the header files (*.h) to the same folder as your C++ source files. The header files from any add-on package should be included too if needed. Alternatively, you may put the VCL header files in a separate folder and specify an include path to this folder.
 \vspacesmall
 
 Include the header file vectorclass.h in your C++ source file.
@@ -629,7 +629,8 @@ for (int i = 0; i < datasize/8; i++) {
 \end{lstlisting}
 \vspacesmall
 
-If you need an array of a size that is determined at runtime, then you will have a problem with alignment. Each vector should preferably be stored at an address divisible by 16, 32 or 64 bytes, according to its size. The compiler can do this when defining a fixed-size array, as in the above example, but not necessarily with dynamic memory allocation. If you create an array of dynamic size by using new, malloc or a container class template, or any other method, then you may not get the proper alignment for vectors.
+If you need an array of a size that is determined at runtime, then you will have a problem with alignment. Each vector should preferably be stored at an address divisible by 16, 32 or 64 bytes, according to its size. 
+The operator \codei{new} will give the correct alignment if you are compiling for the C++17 standard or later.
 A misaligned vector will likely cause the program to crash if compiled for an instruction set less than AVX. See page \pageref{Alignment} for details.
 \vspacesmall
 

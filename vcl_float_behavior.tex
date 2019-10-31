@@ -38,7 +38,7 @@ The INF and NAN codes will propagate to the end result of a series of calculatio
 Conditions where INF and NAN codes are not propagated are discussed at page  \pageref{FloatingPointErrors}
 \vspacesmall
 
-Do not use the option -ffast-math or -ffinite-math-only on Gnu and Clang compilers because this may disable the detection of INF and NAN.
+Do not use the compiler options -ffast-math, -ffinite-math-only, or /fp:fast because this may disable the detection of INF and NAN.
 \vspacesmall
 
 \item[No signaling NANs.]

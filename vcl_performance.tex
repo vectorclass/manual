@@ -55,7 +55,7 @@ The present vector class library is intended as a good alternative when automati
 
 \section{Choice of compiler and function libraries}\label{ChoiceOfCompiler}
 
-It is recommended to compile for 64-bit mode because this gives access to more memory and more registers. The CPU gives you access to only 8 vector registers in 32-bit mode, but 32 vector registers in 64-bit mode if the AVX512 instruction set is enabled.
+It is recommended to compile for 64-bit mode because this gives access to more memory and more registers. The CPU gives you access to only 8 vector registers in 32-bit mode, but 32 vector registers in 64-bit mode if the AVX512 instruction set is enabled. Compiler options are listed in table \ref{table:CommandLineOptions}.
 \vspacesmall
 
 The vector class library has support for the following four compilers:
@@ -67,6 +67,11 @@ This is a very popular compiler for Windows because it has a good and user frien
 
 The Microsoft compiler optimizes reasonably well, but not as good as the other compilers. Support for the latest instruction sets is incomplete.
 \vspacesmall
+
+Do not use the option /fp:fast on a Microsoft compiler because
+this may disable the detection of INF and NAN.
+\vspacesmall
+
 
 \textbf{Intel C++ compiler}\\
 The current version of Intel C++ compiler (version 19.0) cannot compile version 2.xx of VCL due to problems with \codei{constexpr} functions. Use version 1.xx of VCL instead if you need to use the Intel compiler.\\
@@ -80,8 +85,15 @@ for details. Intel's compilers are available for Windows, Linux and Mac platform
 This compiler produced very good optimizations in my tests. The Gnu compiler (g++) is available for all x86 and x86-64 platforms. The math functions in the glibc library are sometimes not fully optimized, but this is not a problem if you are using the math functions in VCL.
 \vspacesmall
 
+Do not use the option -ffast-math or -ffinite-math-only on a Gnu compiler because
+this may disable the detection of INF and NAN.
+\vspacesmall
+
 \textbf{Clang C++ compiler}\\
-This compiler produced the best optimized code in my tests. The Clang compiler is available for all x86 and x86-64 platforms. There are different versions of Clang available for the Windows platform. The version of Clang that comes as a plug in to Visual Studio is better than the version that comes with Cygwin64. Both versions can be used as command line tools.
+This compiler produced the best optimized code in my tests. The Clang compiler is available for all x86 and x86-64 platforms. There are different versions of Clang available for the Windows platform. The Clang version that comes with Cygwin64 should be avoided because it is using an inefficient memory model. You may get Clang directly from \url{https://releases.llvm.org/} or you may use the plugin for Visual Studion (version 16.3 or later) or any other IDE.
+\vspacesmall
+
+Do not use the option -ffast-math or -ffinite-math-only on a Clang compiler because this may disable the detection of INF and NAN.
 \vspacesmall
 
 My recommendation is to use the Clang or Gnu compiler for the release version of a program when performance is important. The Microsoft compiler may be a convenient aid in the development phase. The Intel compiler should not be used if the code may run on an AMD processor.
@@ -522,10 +534,26 @@ There is rarely any reason to have multiple accumulators in integer code, becaus
 
 \section{Using multiple threads}\label{UsingMultipleThreads}
 
-Performance can be improved by dividing the work between multiple threads on processors with multiple CPU cores. The work should be divided between threads in such as way that communication between the threads is avoided, or at least kept at a minimum.
+Performance can be improved by dividing the work between multiple threads running in parallel on processors with multiple CPU cores. 
+It is important to distinguish between coarse-grained parallelism and fine-grained parallelism. Coarse-grained parallelism refers to the situation where a long sequence of operations can be carried out independently of other tasks that are running in parallel. Fine-grained parallelism is the situation where a task is divided into many small subtasks, but it is impossible to work for very long on a particular subtask before coordination with other subtasks is necessary.
 \vspacesmall
 
-The details of this technique is outside the scope of the present manual. The vector class library is thread-safe as long as the same vector is not accessed from multiple threads simultaneously. The floating point control word (see p. \pageref{FPControlWordManipulationFunctions}) is not shared between threads.
+Vector operations are useful for fine-grained parallelism, while multithreading is useful only for coarse-grained parallelism. 
+The work should be divided between threads in such as way that communication between the threads is avoided, or at least kept at a minimum.
+\vspacesmall
+
+Many modern computers have multiple CPU cores. It is often possible to run two threads simultaneously in each CPU core. This is called simultaneous multithreading (SMT) or hyperthreading. 
+Two threads running in the same CPU core will be competing for the same CPU resources so that each thread is getting only half of the available resources. Therefore, SMT is not advantageous for CPU-intensive code such as heavy mathematical calculations. 
+\vspacesmall
+
+The optimal number of threads for CPU-intensive code is equal to the number of CPU cores or physical processors. If the code is not CPU-intensive, i.e. if the performance is limited by something else such as RAM, disk access, or network speed, then you will probably get better performance by setting the number of threads equal to the number of logical processors. This is the number of threads that can run simultaneously without task switching. The number of logical processors is double the number of physical processors if each CPU core can run two threads simultaneously.
+\vspacesmall
+
+The function \codei{physicalProcessors()} gives information about the number of physical and logical processors (see page \pageref{physicalProcessors}).
+\vspacesmall 
+
+
+The vector class library is thread-safe as long as the same vector is not accessed from multiple threads simultaneously. The floating point control word (see p. \pageref{FPControlWordManipulationFunctions}) is not shared between threads.
 \vspacesmall
 
 
@@ -601,6 +629,7 @@ The FMA3 and FMA4 instruction sets are not always handled directly by the code i
 
 It is recommended to specify compiler options that allow efficient code optimizations. Suitable options on Gnu and Clang compilers are
 -O2 -fno-trapping-math -fno-math-errno.
+Suitable options on Microsoft and Intel compilers are /O2 /fp:except-.
 \vspacesmall
 
 There is no advantage in using the biggest vector classes unless the corresponding instruction set is specified, but it can be convenient to use these classes anyway if the same source code is compiled for multiple versions with different instruction sets. Each large vector will simply be split up into two or four smaller vectors when compiling for a lower instruction set.
@@ -612,13 +641,14 @@ It is recommended to make an automatic CPU dispatcher that detects at run time w
 There is an important restriction when you are combining code compiled for different instruction sets: Do not transfer any data as vector objects between different pieces of code that are compiled for different instruction sets, because the vectors may be represented differently under the different instruction sets. It is recommended to transfer the data as arrays instead between different parts of the program that are compiled for different instruction sets.
 \vspacesmall
 
-The functions listed below, defined in the file instrset\_detect.cpp, can be used for detecting at run time which instruction set is supported.
+The functions listed below can be used for detecting at run time which instruction set is supported, and other useful information about the CPU.
 \vspacesmall
 
 \label{instrsetDetect}
 \begin{tabular}{|p{25mm}|p{100mm}|}
 \hline
 \bfseries Function & int instrset\_detect() \\ \hline
+\bfseries Source & instrset\_detect.cpp \\ \hline
 \bfseries Description & 
 returns one of these values: \newline
 0   = 80386 instruction set \newline
@@ -640,6 +670,7 @@ returns one of these values: \newline
 \begin{tabular}{|p{25mm}|p{100mm}|}
 \hline
 \bfseries Function & bool hasFMA3() \\ \hline
+\bfseries Source & instrset\_detect.cpp \\ \hline
 \bfseries Description & returns true if FMA3 is supported \\ \hline
  \bfseries Efficiency & poor \\ \hline
 \end{tabular}
@@ -649,6 +680,7 @@ returns one of these values: \newline
 \begin{tabular}{|p{25mm}|p{100mm}|}
 \hline
 \bfseries Function & bool hasFMA4() \\ \hline
+\bfseries Source & instrset\_detect.cpp \\ \hline
 \bfseries Description & returns true if AMD FMA4 is supported \\ \hline
  \bfseries Efficiency & poor \\ \hline
 \end{tabular}
@@ -658,6 +690,7 @@ returns one of these values: \newline
 \begin{tabular}{|p{25mm}|p{100mm}|}
 \hline
 \bfseries Function & bool hasXOP() \\ \hline
+\bfseries Source & instrset\_detect.cpp \\ \hline
 \bfseries Description & returns true if AMD XOP is supported \\ \hline
  \bfseries Efficiency & poor \\ \hline
 \end{tabular}
@@ -667,6 +700,7 @@ returns one of these values: \newline
 \begin{tabular}{|p{25mm}|p{100mm}|}
 \hline
 \bfseries Function & bool hasAVX512ER() \\ \hline
+\bfseries Source & instrset\_detect.cpp \\ \hline
 \bfseries Description & returns true if AVX512ER is supported \\ \hline
  \bfseries Efficiency & poor \\ \hline
 \end{tabular}
@@ -675,6 +709,7 @@ returns one of these values: \newline
 \begin{tabular}{|p{25mm}|p{100mm}|}
 \hline
 \bfseries Function & bool hasAVX512VBMI() \\ \hline
+\bfseries Source & instrset\_detect.cpp \\ \hline
 \bfseries Description & returns true if AVX512VBMI is supported \\ \hline
  \bfseries Efficiency & poor \\ \hline
 \end{tabular}
@@ -683,7 +718,20 @@ returns one of these values: \newline
 \begin{tabular}{|p{25mm}|p{100mm}|}
 \hline
 \bfseries Function & bool hasAVX512VBMI2() \\ \hline
+\bfseries Source & instrset\_detect.cpp \\ \hline
 \bfseries Description & returns true if AVX512VBMI2 is supported \\ \hline
+ \bfseries Efficiency & poor \\ \hline
+\end{tabular}
+\vspacebig
+
+\label{physicalProcessors}
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & int physicalProcessors(int * logical\_processors = 0) \\ \hline
+\bfseries Source & add-on/physical\_processors.cpp \\ \hline
+\bfseries Description & Returns the number of physical processors = the number of 
+CPU cores. The number of logical processors (returned through 
+logical\_processors) is double the number of physical processors if the CPU can run two threads simultaneously in each CPU core. \\ \hline
  \bfseries Efficiency & poor \\ \hline
 \end{tabular}
 \vspacebig

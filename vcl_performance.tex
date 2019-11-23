@@ -82,15 +82,24 @@ for details. Intel's compilers are available for Windows, Linux and Mac platform
 \vspacesmall
 
 \textbf{Gnu C++ compiler}\\
-This compiler produced very good optimizations in my tests. The Gnu compiler (g++) is available for all x86 and x86-64 platforms. The math functions in the glibc library are sometimes not fully optimized, but this is not a problem if you are using the math functions in VCL.
+This compiler produced very good optimizations in my tests. The Gnu compiler (g++) is available for all x86 and x86-64 platforms. 
+\vspacesmall
+
+There are several versions of the Gnu compiler for the Windows platform. The version that comes with msys2 is recommended. The Cygwin64 version is not recommended if performance is critical because it is using a less efficient memory model.
 \vspacesmall
 
 Do not use the option -ffast-math or -ffinite-math-only on a Gnu compiler because
 this may disable the detection of INF and NAN.
 \vspacesmall
 
+
 \textbf{Clang C++ compiler}\\
-This compiler produced the best optimized code in my tests. The Clang compiler is available for all x86 and x86-64 platforms. There are different versions of Clang available for the Windows platform. The Clang version that comes with Cygwin64 should be avoided because it is using an inefficient memory model. You may get Clang directly from \url{https://releases.llvm.org/} or you may use the plugin for Visual Studion (version 16.3 or later) or any other IDE.
+This compiler produced the best optimized code in my tests. The Clang compiler is available for all x86 and x86-64 platforms. 
+\vspacesmall
+
+There are different versions of Clang available for the Windows platform. 
+The msys2 version, and the version that comes as a plugin for Visual Studio (version 16.3 or later), are both recommended.
+The Cygwin64 version is not recommended if performance is critical because it is using a less efficient memory model.
 \vspacesmall
 
 Do not use the option -ffast-math or -ffinite-math-only on a Clang compiler because this may disable the detection of INF and NAN.
@@ -628,7 +637,8 @@ The FMA3 and FMA4 instruction sets are not always handled directly by the code i
 \vspacesmall
 
 It is recommended to specify compiler options that allow efficient code optimizations. Suitable options on Gnu and Clang compilers are
--O2 -fno-trapping-math -fno-math-errno.
+-O2 -fno-trapping-math -fno-math-errno. The option -O3 is sometimes better than -O2, but in some cases it is worse. You may test whether -O2 or -O3 gives the best performance in your specific case.
+
 Suitable options on Microsoft and Intel compilers are /O2 /fp:except-.
 \vspacesmall
 

@@ -645,10 +645,17 @@ Suitable options on Microsoft and Intel compilers are /O2 /fp:except-.
 There is no advantage in using the biggest vector classes unless the corresponding instruction set is specified, but it can be convenient to use these classes anyway if the same source code is compiled for multiple versions with different instruction sets. Each large vector will simply be split up into two or four smaller vectors when compiling for a lower instruction set.
 \vspacesmall
 
-It is recommended to make an automatic CPU dispatcher that detects at run time which instruction sets are supported by the actual CPU, and selects the best version of the code accordingly. For example, you may compile the code three times for three different instruction sets: SSSE3, AVX2 and AVX512VL/BW/DQ. The CPU dispatcher will then set a function pointer to point to the appropriate version of the compiled code. You can use the function instrset\_detect (see below, page \pageref{instrsetDetect}) to detect the supported instruction set. The file dispatch\_example.cpp shows an example of how to make a CPU dispatcher that selects the appropriate code version. The critical part of the program is called through a function pointer. This function pointer initially points to the CPU dispatcher, which is activated the first time the function is called. The CPU dispatcher changes the function pointer to point to the best version of the code, and then continues in the selected code. The next time the function is called, the call goes directly to the right version of the code without calling the CPU dispatcher first. It is probably not necessary to make a branch for instruction sets prior to SSE2 because most computers today run 64-bit mode which includes SSE2.
+It is recommended to make an automatic CPU dispatcher that detects at run time which instruction sets are supported by the actual CPU, and selects the best version of the code accordingly. For example, you may compile the code three times for three different instruction sets: SSE2, AVX2 and AVX512VL/BW/DQ. The CPU dispatcher will then set a function pointer to point to the appropriate version of the compiled code. You can use the function instrset\_detect (see below, page \pageref{instrsetDetect}) to detect the supported instruction set.
+Two examples are provided to show how to do the CPU dispatching:
 \vspacesmall
 
-There is an important restriction when you are combining code compiled for different instruction sets: Do not transfer any data as vector objects between different pieces of code that are compiled for different instruction sets, because the vectors may be represented differently under the different instruction sets. It is recommended to transfer the data as arrays instead between different parts of the program that are compiled for different instruction sets.
+dispatch\_example1.cpp: This example is using different function names for the different versions. This is useful for simple cases with only one or a few functions.
+\vspacesmall
+
+dispatch\_example2.cpp: This example is using different namespaces for the different versions. This is the preferred method if the code contains multiple functions, classes, objects, etc.
+\vspacesmall
+
+There is an important restriction when you are combining code compiled for different instruction sets: Do not transfer any data as vector objects between different pieces of code that are compiled for different instruction sets because the vectors may be represented differently under the different instruction sets. It is recommended to transfer the data as arrays instead between different parts of the program that are compiled for different instruction sets.
 \vspacesmall
 
 The functions listed below can be used for detecting at run time which instruction set is supported, and other useful information about the CPU.

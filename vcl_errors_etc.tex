@@ -60,7 +60,9 @@ b = select(f, a, 0.5);
 
 \subsection{Compile-time errors}\label{CompileTimeErrors}
 The Vector Class Library is making heavy use of metaprogramming features that go to the limit of what modern compilers can do. Occasional problems have been observed with all compilers.
-Errors that are specific to a particular compiler are listed in separate files at the GIT repository under miscellaneous.
+Errors that are specific to a particular compiler are listed in separate files at the GIT repository under 
+\href{https://github.com/vectorclass/miscellaneous}{miscellaneous}. 
+Please check these lists of known errors before reporting a problem.
 \vspacesmall
 
 Even small syntax errors may result in very long error messages due to the heavy use of templates and overloading. These error messages may be confusing, but generally indicating the line number of the error.
@@ -69,13 +71,13 @@ Even small syntax errors may result in very long error messages due to the heavy
 Integer vector division by a \codei{const\_int} or \codei{const\_uint} can produce a compile-time error message when the divisor is zero or out of range.
 \vspacesmall
  
-Version 1.xx of VCL may produce error messages that are not very informative, such as 
-\textbf{"Static\_error\_check\textless false\textgreater"} due to limitations in template metaprogramming.
-\vspacesmall
-
 \textbf{"Ambiguous call to overloaded function"}: \\
 This can happen when parameters have wrong types.
 Make sure all parameters have the correct type.
+\vspacesmall
+
+Version 1.xx of VCL may produce error messages that are not very informative, such as 
+\textbf{"Static\_error\_check\textless false\textgreater"} due to limitations in template metaprogramming.
 \vspacesmall
 
 

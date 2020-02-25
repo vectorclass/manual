@@ -407,6 +407,8 @@ b.load(list+4); // b = (14,15,16,17)
 This method does the same as the \codei{load} method (see above), but requires that the pointer points to an address divisible by 16 for 128-bit vectors, by 32 for 256-bit vectors, or by 64 for 512 bit vectors. If you are not certain that the array is properly aligned then use \codei{load} instead of \codei{load\_a}. There is hardly any difference in efficiency between \codei{load} and \codei{load\_a} on newer microprocessors.
 \vspacebig
 
+
+
 \begin{tabular}{|p{25mm}|p{100mm}|}
 \hline
 \bfseries Method & load\_partial(int n, const pointer) \\ \hline
@@ -487,6 +489,18 @@ b.store(list+4); // list contains (10,11,12,13,20,21,22,23)
 This method does the same as the store method (see above), but requires that the pointer points to an address divisible by 16 for 128-bit vectors, by 32 for 256-bit vectors, or by 64 for 512-bit vectors. If you are not certain that the array is properly aligned then use \codei{store} instead of \codei{store\_a}.
 There is hardly any difference in efficiency between \codei{store} and \codei{store\_a} on newer microprocessors.
 
+\vspacebig
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Method & store\_nt(pointer) \\ \hline
+\bfseries Defined for & all integer and floating point vector classes \\ \hline
+\bfseries Description & stores all elements into an aligned array without caching \\ \hline
+\bfseries Efficiency & recommended only for very large arrays \\ \hline
+\end{tabular}
+\vspacesmall
+
+This method does the same as the \codei{store\_a} method (see above), but without using the cache. This is optimal only for very large arrays when it is unlikely that the data will stay cached until they are read again.
+As a rule of thumb, use \codei{store\_nt} for memory blocks bigger than half the size of the last-level cache. You will get a runtime error if the pointer is not properly aligned.
 
 \vspacebig
 \begin{tabular}{|p{25mm}|p{100mm}|}

@@ -96,16 +96,18 @@ Do not put new features into the main VCL files unless there is general agreemen
 \vspacesmall
 
 The coding style must follow the guidelines listed above on page \pageref{CodingStyle}. Do not insert metadata for Doxygen or similar tools. Follow the optimization guidelines mentioned above.
-
-
-Any modification to the main VCL files should be tested with different compilers and different operating systems on the test bench described below in chapter \ref{chap:TestBench}.
 \vspacesmall
 
+Any modification to the main VCL files should be tested with different compilers and different operating systems on the test bench described below in chapter \ref{chap:TestBench}. Avoid any files or features that are specific to a particular CPU, operating system, platform, or development tool.
+\vspacesmall
+
+Copyright is a problem. If different contributions are copyrighted by different contributors than it will be impossible to make any legal decisions regarding VCL if not all contributors can be contacted. There are plans to assign the copyright to a non-profit organization, but no particular organization has been chosen yet.
+\vspacesmall
 
 
 \section{Test bench}\label{chap:TestBench}
 A test bench has been developed for the purpose of automatic testing of VCL.
-The test bench includes C++ code and a bash script for automatic testing of operators and functions. The script will run through a list of test cases to test each operator or  function with many different combinations of vector classes, instruction sets, compilers, and operating systems. Each test case will be implemented by compiling and running a small test program and comparing the resulting values with the expected values.
+The test bench includes C++ code and a bash script for automatic testing of operators and functions. The script will run through a list of test cases to test each operator and function with many different combinations of vector classes, instruction sets, compilers, and operating systems. Each test case will be implemented by compiling and running a small test program and comparing the resulting values with the expected values.
 \vspacesmall
 
 The test bench is used in the development of VCL. It is not intended for programmers that use the VCL. All code and documentation for the test bench is provided in the folder named testbench.

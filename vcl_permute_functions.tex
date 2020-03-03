@@ -261,7 +261,7 @@ A function with a limited number of possible input values can be replaced by a l
 // Table of the function y = x*x-1
 int table[6] = {-1,0,3,8,15,24};
 Vec4i x(4,2,0,5);
-Vec4i y = lookup<6>(table);  // y = (15, 3, -1, 24)
+Vec4i y = lookup<6>(x, table);  // y = (15, 3, -1, 24)
 
 // Example of gathering non-contiguous data from an array:
 float x[16] = { ... };

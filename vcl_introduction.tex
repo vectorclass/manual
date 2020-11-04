@@ -45,7 +45,7 @@ Example \ref{exampleArrayLoopVect} does the same as example \ref{exampleArrayLoo
 
 \section{How it works} \label{HowItWorks}
 The type \codei{Vec8f} in example \ref{exampleArrayLoopVect} is a class that encapsulates the intrinsic type 
-\codei{\_\_m256} which represents a 256-bit vector register holding 8 floating point numbers of 32 bits each. The overloaded operators \codei{+} and \codei{*} represent the SIMD instructions for adding and multiplying vectors. These operators are inlined so that no extra code is generated other than the SIMD instructions. All you have to do to get access to these vector operations is to include "vectorclass.h" in your C++ code and specify the desired instruction set (e.g. SSE2 or AVX512) in your compiler options.
+\codei{\_\_m256} which represents a 256-bit vector register holding 8 floating point numbers of 32 bits each. The overloaded operators \codei{+} and \codei{*} represent the SIMD instructions for adding and multiplying vectors. These operators are inlined so that no extra code is generated other than the SIMD instructions. All you have to do to get access to these vector operations is to include "vectorclass.h" in your C++ code and specify the desired instruction set (e.g. SSE2, AVX2, or AVX512) in your compiler options.
 \vspacesmall
 
 The code in example \ref{exampleArrayLoopVect} can be reduced to just 4 machine instructions if the instruction set AVX or higher is enabled. The SSE2 instruction set will give 8 machine instructions because the maximum vector register size is only half as big for instruction sets prior to AVX. The code in example \ref{exampleArrayLoop1} will generate approximately 44 instructions if the compiler does not automatically vectorize the code.
@@ -71,14 +71,14 @@ The code in example \ref{exampleArrayLoopVect} can be reduced to just 4 machine 
 \vspacesmall
 
 \section{Instruction sets supported} \label{InstructionSetsSupported}
-Since 1997, each new CPU model has extended the x86 instruction set with more SIMD instructions. The VCL library requires the SSE2 instruction set as a minimum, and supports SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX, AVX2, XOP, FMA3, FMA4, and AVX512F/VL/BW/DQ/ER, as well as the future AVX512VBMI/VBMI2.
+Since 1997, each new CPU model has extended the x86 instruction set with more SIMD instructions. The VCL library requires the SSE2 instruction set as a minimum, and supports SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX, AVX2, XOP, FMA3, FMA4, and AVX512F/VL/BW/DQ/ER, as well as the new AVX512VBMI/VBMI2.
 \vspacesmall
 
 \section{Platforms supported} \label{PlatformsSupported}
 Windows, Linux, and Mac, 32-bit and 64-bit, with Intel, AMD, or VIA x86 or x86-64 instruction set processor. There are no plans to support ARM or other instruction sets.
 \vspacesmall
 
-A special version of the vector class library for the Intel Knights Corner coprocessor has been developed at CERN. It is available from
+A special version of the vector class library for the (now obsolete) Intel Knights Corner coprocessor has been developed at CERN. It is available from
 https://bitbucket.org/veclibknc/vclknc.git or 
 https://bitbucket.org/edanor/umesimd/
 \vspacesmall
@@ -87,10 +87,10 @@ https://bitbucket.org/edanor/umesimd/
 The vector class library could not have been made with any other programming language than C++, because only C++ combines all the necessary features: low-level programming such as bit manipulation and intrinsic functions, high-level programming features such as classes and templates, operator overloading, metaprogramming, compiling to machine code without any intermediate byte code, and highly optimizing compilers with support for the many different instruction sets and platforms.
 \vspacesmall
 
-The vector class library works with Microsoft, Intel, Gnu, and Clang C++ compilers. It is recommended to use the newest version of the compiler if the newest instruction sets are used.
+The vector class library works with Microsoft, Intel, Gnu, and Clang C++ compilers. It is recommended to use the newest version of the compiler if the newest instruction sets are used. The best optimization is obtained with the Gnu and Clang compilers.
 \vspacesmall
 
-The vector class library version 1.xx uses standard C++0x, while version 2.xx requires C++17 or later.
+The vector class library version 1.xx uses standard C++0x, while version 2.xx requires C++17 or later. The Intel compiler currently works only with version 1.xx of the library.
 \vspacesmall
 
 \section{Intended use} \label{IntendedUse}
@@ -126,9 +126,15 @@ The newest version of the vector class library is available from
 \href{https://github.com/vectorclass}{github.com/vectorclass}
 \vspacesmall
 
-A discussion board for the vector class library is currently provided at
-\href{https://www.agner.org/optimize/vectorclass/}{www.agner.org/optimize/vectorclass}. 
-This may later be moved to a more appropriate place.
+
+\section{Support} \label{Support}
+The vector class library is not a commercial product, but free and open source code. 
+You cannot expect the kind of support you would get with a paid product. 
+\vspacesmall
+
+A discussion board for software developed by Agner Fog is currently provided at
+\href{https://www.agner.org/forum/viewforum.php?f=1}{www.agner.org/forum/viewforum.php?f=1}. This is intended for general discussion and suggestions, but not for programming support. Programming questions may be asked at 
+\href{https://stackoverflow.com}{Stackoverflow} using the tag \bf{vector-class-library}.
 \vspacesmall
 
 

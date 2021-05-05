@@ -263,43 +263,77 @@ Example \ref{exampleArrayLoopInsert} avoids any memory intermediate by inserting
 
 \section{Alignment of arrays and vectors}\label{Alignment}
 
-Reading and writing vectors to memory is likely to be faster if the array in memory is aligned to an address divisible by the vector size. The vector size is 16, 32, or 64 bytes for 128, 256, and 512 bits, respectively. The program is likely to crash if vectors are not aligned by at least 16 when the instruction set is less than AVX.
+Reading and writing vectors to memory is likely to be faster if the array in memory is aligned to an address divisible by the vector size. The vector size is 16, 32, or 64 bytes for 128, 256, and 512 bits, respectively. The program may not work when compiled for an instruction set less than AVX if vectors are not aligned by at least 16.
 \vspacesmall
 
-Most compilers will align large arrays automatically if they are stored in static memory, but perhaps not if they are stored in local memory or allocated with \codei{new}, etc.
+Most compilers will align large arrays automatically if they are stored in static memory, but perhaps not if they are stored in local memory or allocated with operator \codei{new}, etc.
 \vspacesmall
 
+An array can be aligned with the \codei{alignas} keyword, for example:
 
-To align an array by 32 in Windows, write:
 \begin{lstlisting}[frame=none]
-__declspec(align(32)) int mydata[1000];
+alignas(64) float mydata[1024];
 \end{lstlisting}
 \vspacesmall
 
-In Unix-like systems, write:
-
-\begin{lstlisting}[frame=none]
-int mydata[1000] __attribute__((aligned(32)));
-\end{lstlisting}
+Older compilers use \codei{\_\_declspec(align(64))} in Windows, or 
+ \codei{ \_\_attribute\_\_((aligned(64)) } in Linux.
 \vspacesmall
+
 
 It is always recommended to align large arrays for performance reasons if the code uses vectors. Unfortunately, it may be more complicated to align arrays that are allocated dynamically with operator \codei{new} or with container classes. 
-Older versions of the C++ standard do not specify how to make aligned memory allocation. Newer versions of C++ support alignment with \codei{std::align} (C++11) or \codei{std::aligned\_alloc} (C++17). 
-The operator \codei{new} will align an array of vectors correctly under C++17.
+Older versions of the C++ standard do not specify how to make aligned memory allocation. C++ version 17 supports alignment with \codei{std::aligned\_alloc}. Unfortunately, this does not yet work with all compilers.
 \vspacesmall
 
-If your compiler does not offer an appropriate method for aligning dynamically allocated memory then you may do the alignment manually:
+A method that seems to work with current compilers is to align an array of vectors with operator \codei{new}. The compiler recognizes that a vector class, e.g. \codei{Vec8f}, needs alignment. An array of such vectors will be aligned correctly, even when allocated with \codei{new}. This is illustrated in the following example:
+
+\begin{lstlisting}[frame=none]
+// size of dataset, as number of floats:
+int datasize = 1024;
+
+// variable size array, properly aligned
+// (assuming that datasize is divisible by vector size):
+Vec8f *mydata = new Vec8f[datasize / Vec8f::size()];
+
+// access array as single elements:
+float * mydataf = (float*)mydata;
+int i;
+for (i = 0; i < datasize; i++) {
+    mydataf[i] = (float)i;
+}
+
+// access array as vectors:
+Vec8f x;
+for (i = 0; i < datasize / Vec8f::size(); i++) {
+    x = mydata[i];
+    x *= 100.f;
+    mydata[i] = x;
+}
+
+// remember to free the allocated data:
+delete[] mydata;
+\end{lstlisting}
+\vspacesmall
+
+
+If the compiler does not offer any useful method for aligning dynamically allocated memory then you may do the alignment manually:
 
 \begin{lstlisting}[frame=none]
 // Example of aligning memory
-int arraySize = 1000;     // Required memory size
-const int alignBy = 64;   // Required alignment
+int arraySize = 1024;     // Required array size
+const int alignBy = 64;   // Required alignment (must be a power of 2)
 // allocate more than needed
-char * unalignedAddress = new char[arraySize + alignBy];
+char * unalignedAddress = new char[arraySize*sizeof(float) + alignBy];
 // round up the address to nearest multiple of alignBy
-char * alignedAddress = (char*)(((size_t)unalignedAddress + alignBy - 1) & (-alignBy));
+char * alignedAddress = (char*)(((size_t)unalignedAddress+alignBy-1) & (-alignBy));
 
-... //use alignedAddress
+// cast aligned pointer to required type
+float * mydataf = (float*)alignedAddress;
+
+// use the aligned array
+for (int i = 0; i < arraySize; i++) {
+    mydataf[i] = (float)i;
+}
 
 // remember to free at unalignedAddress, not alignedAddress
 delete[] unalignedAddress; // free memory
@@ -551,7 +585,7 @@ Vector operations are useful for fine-grained parallelism, while multithreading 
 The work should be divided between threads in such as way that communication between the threads is avoided, or at least kept at a minimum.
 \vspacesmall
 
-Many modern computers have multiple CPU cores. It is often possible to run two threads simultaneously in each CPU core. This is called simultaneous multithreading (SMT) or hyperthreading. 
+Modern computers have multiple CPU cores. It is often possible to run two threads simultaneously in each CPU core. This is called simultaneous multithreading (SMT) or hyperthreading. 
 Two threads running in the same CPU core will be competing for the same CPU resources so that each thread is getting only half of the available resources. Therefore, SMT is not advantageous for CPU-intensive code such as heavy mathematical calculations. 
 \vspacesmall
 
@@ -561,8 +595,10 @@ The optimal number of threads for CPU-intensive code is equal to the number of C
 The function \codei{physicalProcessors()} gives information about the number of physical and logical processors (see page \pageref{physicalProcessors}).
 \vspacesmall 
 
+It is not safe to access the same data from multiple threads simultaneously. For example, it may be uncertain whether one thread is reading a value before or after it has been modified by another thread. Container classes, in particular, are unsafe to access from multiple threads.
+\vspacesmall
 
-The vector class library is thread-safe as long as the same vector is not accessed from multiple threads simultaneously. The floating point control word (see p. \pageref{FPControlWordManipulationFunctions}) is not shared between threads.
+The floating point control word (see p. \pageref{FPControlWordManipulationFunctions}) is not shared between threads.
 \vspacesmall
 
 
@@ -584,8 +620,8 @@ SSSE3 & 2006 & permute, blend and lookup functions, integer abs \\ \hline
 SSE4.1 & 2007 & select, blend, horizontal\_and, horizontal\_or, integer max/min, integer multiply (32 and 64 bit), integer divide (32 bit), 64-bit integer compare (==, !=), floating point round, truncate, floor, ceil. \\ \hline
 SSE4.2 & 2008 & 64-bit integer compare (\textgreater, \textgreater =, \textless, \textless =). 64 bit integer max, min \\ \hline
 AVX & 2011 & all operations on 256-bit floating point vectors: Vec8f, Vec4d \\ \hline
-XOP \newline AMD only & 2011 & compare, horizontal\_add\_x, rotate\_left, blend, and lookup on 128-bit integer vectors \\ \hline
-FMA4 \newline AMD only & 2011 & floating point code containing multiplication followed by addition \\ \hline
+XOP \newline AMD only & 2011 & compare, horizontal\_add\_x, rotate\_left, blend, and lookup on 128-bit integer vectors. Obsolete. \\ \hline
+FMA4 \newline AMD only & 2011 & floating point code containing multiplication followed by addition. Obsolete. \\ \hline
 FMA3 & 2012 & floating point code containing multiplication followed by addition \\ \hline
 AVX2 & 2013 & All operations on 256-bit integer vectors: Vec32c, Vec32uc, Vec16s, Vec16us, Vec8i, Vec8ui, Vec4q, Vec4uq. Gather. \\ \hline
 AVX512F & 2016 & All operations on 512-bit integer and floating point vectors: Vec16i, Vec16ui, Vec8q, Vec8uq, Vec16f, Vec8d. \\ \hline
@@ -614,8 +650,6 @@ SSSE3 & -mssse3 & -mssse3 & /arch:ssse3 & /arch:sse2 \newline /D\_\_SSSE3\_\_ \\
 SSE4.1 & -msse4.1 & -msse4.1 & /arch:sse4.1 & /arch:sse2 \newline /D\_\_SSE4\_1\_\_ \\ \hline
 SSE4.2 & -msse4.2 & -msse4.2 & /arch:sse4.2 & /arch:sse2 \newline /D\_\_SSE4\_2\_\_ \\ \hline
 AVX & -mavx \newline -fabi-version=0 & -mavx & /arch:avx & /arch:avx /DINSTRSET=7 \\ \hline
-XOP & -mavx \newline -mxop \newline -fabi-version=0 & not supported & not supported & /arch:avx \newline /D\_\_XOP\_\_ \\ \hline
-FMA4 & -mfma4 & not supported & not supported & not supported \\ \hline
 FMA3 & -mfma & -mfma & /Qfma & /DINSTRSET=7 \\ \hline
 AVX2 & -mavx2 \newline -fabi-version=0 & -mavx2 & /arch:avx2 & /arch:avx2 \newline /DINSTRSET=8 \\ \hline
 AVX512F & -mavx512f & -xCOMMON-AVX512 & /arch:COMMON-AVX512 & not supported without AVX512DQ\\ \hline
@@ -633,7 +667,7 @@ AVX512ER & -mavx512er & -xMIC-AVX512 & /arch:MIC-AVX512 & /D\_\_AVX512ER\_\_ \\ 
 The Microsoft compiler does not have command line options for all the instruction sets, but other instruction sets can be specified as defines which are detected in the preprocessing directives of the vector class library.
 \vspacesmall
 
-The FMA3 and FMA4 instruction sets are not always handled directly by the code in the vector class library, but by the compiler. The compiler may automatically combine a floating point multiplication and a subsequent addition or subtraction into a single instruction, unless you have specified a strict floating point model.
+The FMA3 instruction set is not always handled directly by the code in the vector class library, but by the compiler. The compiler may automatically combine a floating point multiplication and a subsequent addition or subtraction into a single instruction, unless you have specified a strict floating point model.
 \vspacesmall
 
 It is recommended to specify compiler options that allow efficient code optimizations. Suitable options on Gnu and Clang compilers are
@@ -692,27 +726,6 @@ returns one of these values: \newline
  \bfseries Efficiency & poor \\ \hline
 \end{tabular}
 \vspacebig
-
-
-\begin{tabular}{|p{25mm}|p{100mm}|}
-\hline
-\bfseries Function & bool hasFMA4() \\ \hline
-\bfseries Source & instrset\_detect.cpp \\ \hline
-\bfseries Description & returns true if AMD FMA4 is supported \\ \hline
- \bfseries Efficiency & poor \\ \hline
-\end{tabular}
-\vspacebig
-
-
-\begin{tabular}{|p{25mm}|p{100mm}|}
-\hline
-\bfseries Function & bool hasXOP() \\ \hline
-\bfseries Source & instrset\_detect.cpp \\ \hline
-\bfseries Description & returns true if AMD XOP is supported \\ \hline
- \bfseries Efficiency & poor \\ \hline
-\end{tabular}
-\vspacebig
-
 
 \begin{tabular}{|p{25mm}|p{100mm}|}
 \hline

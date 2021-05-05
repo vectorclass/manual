@@ -133,7 +133,10 @@ You cannot expect the kind of support you would get with a paid product.
 \vspacesmall
 
 A discussion board for software developed by Agner Fog is currently provided at
-\href{https://www.agner.org/forum/viewforum.php?f=1}{www.agner.org/forum/viewforum.php?f=1}. This is intended for general discussion and suggestions, but not for programming support. Programming questions may be asked at 
+\href{https://www.agner.org/forum/viewforum.php?f=1}{www.agner.org/forum/viewforum.php?f=1}. This is intended for general discussion and suggestions, but not for programming support. 
+\vspacesmall
+
+Programming questions should preferably be asked at 
 \href{https://stackoverflow.com}{Stackoverflow} using the tag \bf{vector-class-library}.
 \vspacesmall
 
@@ -147,7 +150,8 @@ You may obtain a copy of the license at
 \href{https://www.apache.org/licenses/LICENSE-2.0}{www.apache.org/licenses/LICENSE-2.0}
 \vspacesmall
 
-I have previously sold commercial licenses to VCL. Now, I have decided for a more permissive license because the selling of commercial licenses gave a lot of administrative and bureaucratic problems for just a small profit. Instead of selling commercial licenses, I am now suggesting that commercial users make a donation to some open source project of your own choosing or to an organization promoting open source software.
+I have previously sold commercial licenses to VCL. Now, I have decided for a more permissive license because the selling of commercial licenses gave a lot of administrative and bureaucratic problems for just a small profit. Instead of selling commercial licenses, I am now suggesting that commercial users make a donation to an open source project of your own choosing or to an organization promoting open source software.
+\vspacesmall
 
 
 \chapter{The basics}\label{chap:TheBasics}
@@ -636,29 +640,27 @@ int t = a.elementtype();  // t = 6
 \vspacesmall
 
 
-\section{Arrays of vectors} \label{ArraysOfVectors}
+\section{Arrays and vectors} \label{ArraysOfVectors}
+Vectors are very useful for array loops with large data sets. Data arrays may have fixed size or variable size. A fixed size array is particularly efficient if the size is known when the program is compiled, or a reasonable upper limit can be set. For example:
 
-If you make an array of vectors, this should preferably have fixed size. For example:
 \begin{lstlisting}[frame=none]
-const int datasize = 1024;  // size of data set
-Vec8f mydata[datasize/8];   // array of fixed size
+int const datasize = 1024;  // size of dataset, constant
+float mydata[datasize];     // constant size array
 ...
-for (int i = 0; i < datasize/8; i++) {
-   mydata[i] = mydata[i] * 0.1f + 2.0f;
+Vec8f x;
+for (int i = 0; i < datasize; i += 8) {
+   x.load(mydata+i);
+   x = x * 0.1f + 2.0f;
+   x.store(mydata+i);
 }
 \end{lstlisting}
 \vspacesmall
 
-If you need an array of a size that is determined at runtime, then you will have a problem with alignment. Each vector should preferably be stored at an address divisible by 16, 32 or 64 bytes, according to its size. 
-The operator \codei{new} will give the correct alignment if you are compiling for the C++17 standard or later.
-A misaligned vector will likely cause the program to crash if compiled for an instruction set less than AVX. See page \pageref{Alignment} for details.
-\vspacesmall
-
-It is recommended to make an array of scalars instead of an array of vectors in order to avoid these complications. If the datasize in the above example is variable, then the code could be implemented in this way:
+If the size of the array is determined at runtime then the most efficient solution is to allocate the array using the operator \codei{new}:
 
 \begin{lstlisting}[frame=none]
-int datasize = 1024;  // size of dataset, variable
-float *mydata = new float[datasize]; // dynamic array
+int datasize = 1024;                 // size of dataset, variable
+float *mydata = new float[datasize]; // allocate variable size array
 ...
 Vec8f x;
 for (int i = 0; i < datasize; i += 8) {
@@ -667,16 +669,27 @@ for (int i = 0; i < datasize; i += 8) {
    x.store(mydata+i);
 }
 ...
-delete[] mydata;
+delete[] mydata; // remember to free the allocated data
 \end{lstlisting}
+\vspacesmall
+
+It is recommended to align an array by the vector size for optimal performance. See page \pageref{Alignment} for details.
 \vspacesmall
 
 See page \pageref{NotAMultipleOfVectorSize} for discussion of the case where the data size is not a multiple of the vector size.
 \vspacesmall
 
+A matrix or multidimensional array can be implemented in various ways. If the length of each row is not more than the vector size, then it is convenient to use one VCL vector for each row. Longer rows can be contained in multiple VCL vectors. If the number of columns is variable then it is recommended to store the rows one after another in a linear array. Use padding space at the end of each row, if necessary, to align the next row by the vector length. 
+\vspacesmall
+
+Do not use the standard C++ container classes. It is unfortunately common to use nested container classes such as \codei{std::vector<std::vector<data\_type>>}. Such constructs are inefficient and should be avoided.
+\vspacesmall
+
+
+
 \section{Using a namespace} \label{UsingANamespace}
 
-In general, there is no need to put the vector class library into a separate namespace. Therefore, the use of a namespace is optional. You can give the vector class library a namespace with a name of your choosing by defining \codei{VCL\_NAMESPACE}, for example:
+In general, there is no need to put the vector class library into a separate namespace. Therefore, the use of a namespace is optional. You can give the vector class library a namespace, if necessary, by defining \codei{VCL\_NAMESPACE}, for example:
 
 \begin{lstlisting}[frame=single]
 #define VCL_NAMESPACE  vcl

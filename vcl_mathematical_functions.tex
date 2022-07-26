@@ -11,7 +11,8 @@
 \bfseries Defined for & all floating point vector classes \\ \hline
 \bfseries Description & extracts the exponent part of a floating point number. The result is an integer vector.\newline 
 exponent(a) = floor(log2(abs(a))).\newline
-The value for a = 0 is implementation dependent \\ \hline
+The value for a = 0 is implementation dependent.\newline 
+Subnormal numbers are not supported. \\ \hline
  \bfseries Efficiency & medium \\ \hline
 \end{tabular}
 \begin{lstlisting}[frame=none]
@@ -27,8 +28,8 @@ Vec4i b = exponent(a);  // b = (0, 1, 1, 2)
 \bfseries Function & fraction \\ \hline
 \bfseries Defined for & all floating point vector classes \\ \hline
 \bfseries Description & extracts the fraction part of a floating point number.\newline
-a = pow(2,exponent(a)) * fraction(a) \newline
-The value for a = 0, INF, or NAN is implementation dependent \\ \hline
+a = pow(2, exponent(a)) * fraction(a) \newline
+The results for a = 0, subnormal, INF, or NAN are implementation dependent. \\ \hline
 \bfseries Efficiency & medium \\ \hline
 \end{tabular}
 \begin{lstlisting}[frame=none]
@@ -63,10 +64,33 @@ mul\_sub \\ \hline
 nmul\_add(a,b,c) = -a*b+c \newline
 mul\_sub(a,b,c) = a*b-c \newline
 These functions use fused multiply-and-add (FMA) instructions if available. Some compilers use FMA instructions automatically for expressions like a*b+c. Use these functions for optimal performance on all compilers or to specify calculation order, etc. \\ \hline
-\bfseries Precision & The intermediate product a*b is calculated with infinite precision if the FMA instruction set is enabled. \\ \hline
+\bfseries Precision & The intermediate product a*b is calculated with unlimited precision if the FMA instruction set is enabled. \\ \hline
 \bfseries Efficiency & good \\ \hline
 \end{tabular}
-\vspacesmall
+\vspacebig
+
+
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & fremainder \newline
+fmodulo \\ \hline
+\bfseries Defined for & single and double precision floating point vectors \\ \hline
+\bfseries Description & 
+vector fremainder(vector n, double d) \newline
+vector fmodulo(vector n, double d) \newline
+n (numerator) is reduced modulo d (denominator). \newline
+The same denominator is applied to all vector elements. \newline
+The result is within the following limits: \newline
+fremainder: -d/2 <= result < d/2 \newline
+fmodulo: 0 <= result < d \newline
+Note that fmodulo never gives a negative result even if n is negative, unlike the standard fmod function. \\ \hline
+\bfseries Precision & d is double precision, even if n is single precision. 
+The full double precision of d is utilized. It is recommended to calculate
+d with double precision, even if n is single precision. \newline
+Precision and efficiency is best if the FMA instruction set is enabled. \\ \hline
+\bfseries Efficiency & medium \\ \hline
+\end{tabular}
+\vspacebig
 
 
 \section{Floating point categorization functions}\label{FloatingPointCategorizationFunctions}
@@ -155,7 +179,9 @@ Vec4fb c = is_zero_or_subnormal(b); // c = (false,false,true,true)
 \vspacesmall
 \begin{tabular}{|p{25mm}|p{100mm}|}
 \hline
-\bfseries Function & infinite4f, infinite8f, infinite16f, \newline
+\bfseries Function & 
+infinite8h, infinite16h, infinite32h, \newline
+infinite4f, infinite8f, infinite16f, \newline
 infinite2d, infinite4d, infinite8d \\ \hline
 \bfseries Defined for & all floating point vector classes \\ \hline
 \bfseries Description & returns positive infinity \\ \hline
@@ -171,7 +197,11 @@ Vec4f  a = infinite4f(); // a = (INF, INF, INF, INF)
 \label{nan4f}
 \begin{tabular}{|p{25mm}|p{100mm}|}
 \hline
-\bfseries Function & nan4f(unsigned int n) \newline
+\bfseries Function & 
+nan8h(unsigned int n) \newline
+nan16h(unsigned int n) \newline
+nan32h(unsigned int n) \newline
+nan4f(unsigned int n) \newline
 nan8f(unsigned int n) \newline
 nan16f(unsigned int n) \newline
 nan2d(unsigned int n) \newline
@@ -180,8 +210,12 @@ nan8d(unsigned int n) \\ \hline
 \bfseries Defined for & all floating point vector classes \\ \hline
 \bfseries Description & returns not-a-number (NAN). \newline
 The optional parameter n may be used for error tracing. \newline
-The maximum value of n is 0x003FFFFF.
-This parameter can be retrieved later by the function nan\_code (page \pageref{nanCode}). \\ \hline
+The maximum value of n is 0x003FFFFF for single and double precision, and 0x1FF for half precision.\newline
+This function generates a quiet NAN in the following way:\newline
+Half precision: The value n is OR'ed with 0x200 to set the quiet bit, and inserted as a payload.\newline
+Single precision: The value n is OR'ed with 0x400000 to set the quiet bit, and inserted as a payload.\newline
+Double precision: The value n is shifted 29 places to the left for the sake of compatibility with single precision. The value is then OR'ed with $1<<51$ to set the quiet bit.\newline
+This parameter n (including the quiet bit) can be retrieved later by the function nan\_code (page \pageref{nanCode}). \\ \hline
 \bfseries Efficiency & good \\ \hline
 \end{tabular}
 \begin{lstlisting}[frame=none]
@@ -193,7 +227,7 @@ Vec4f a = nan4f(); // a = (NAN, NAN, NAN, NAN)
 
 \section{Floating point control word manipulation functions}\label{FPControlWordManipulationFunctions}
 
-MXCSR is a control word that controls floating point exceptions, rounding mode and subnormal numbers. There is one MXCSR for each thread. 
+MXCSR is a control word that controls floating point exceptions, rounding mode and subnormal numbers for single and double precision floating point numbers. There is one MXCSR for each thread. 
 
 The MXCSR has the following bits:
 \begin{tabular}{|p{25mm}|p{100mm}|}
@@ -220,6 +254,7 @@ The MXCSR has the following bits:
 If the rounding mode is temporarily changed then it must be set back to 00 for the vector class library to work correctly. \\ \hline
 15 & Flush to Zero \\ \hline
 \end{tabular}
+\vspacesmall
 
 Please see programming manuals from Intel or AMD for further explanation.
 
@@ -270,7 +305,7 @@ reset_control_word();
 \bfseries Function & no\_subnormals \\ \hline
 \bfseries Description & Disables the use of subnormal (denormal) values. \newline
 Floating point numbers with an absolute value below  \newline
-1.18E-38 for single precision or 2.22E-308 for double precision are represented by subnormal numbers. The handling of subnormal numbers is extremely time-consuming on many CPUs. The no\_subnormals function sets the "denormals are zeros" and "flush to zero" mode to avoid the use of subnormal numbers. It is recommended to call this function at the beginning of each thread in order to improve the speed of mathematical calculations if very low numbers are likely to occur. \\ \hline
+1.18E-38 for single precision or 2.22E-308 for double precision are represented by subnormal numbers. The handling of subnormal numbers is extremely time-consuming on many CPUs. The no\_subnormals function sets the "denormals are zeros" and "flush to zero" mode to avoid the use of subnormal numbers. It is recommended to call this function at the beginning of each thread in order to improve the speed of mathematical calculations if very low numbers are likely to occur. This function has no effect on half precision numbers. \\ \hline
 \bfseries Efficiency & medium \\ \hline
 \end{tabular}
 \begin{lstlisting}[frame=none]
@@ -279,9 +314,9 @@ no_subnormals();
 \end{lstlisting}
 
 
-\section{Floating point mathematical functions}\label{FPMathematicalFunctions}
+\section{Standard mathematical functions}\label{FPMathematicalFunctions}
 
-Mathematical functions such as logarithms, exponential functions, power, trigonometric functions, etc. are available either as inline code or through external function libraries. These functions all take vectors as input and produce vectors as output.
+Standard mathematical functions such as logarithms, exponential functions, power, trigonometric functions, etc. for vectors are available in two versions: as inline code and as an external function library provided by Intel. These functions all take vectors as input and produce vectors as output.
 \vspacesmall
 
 
@@ -310,22 +345,26 @@ int main() {
 \end{lstlisting}
 \vspacesmall
 
+The inline versions and the external library versions are using different calculation methods. The inline versions may be faster in some cases, while the external library versions may be faster in other cases. Both versions are many times faster than standard (scalar) math function libraries. 
+\vspacesmall
+
+The available vector math functions are listed below. The efficiency is listed as poor because mathematical functions take more time to execute than most other functions, but they are still much faster than scalar alternatives. The details listed apply to the inline version. Details for the library version may be sought in the documentation for the Intel compiler.
+\vspacebig
+
+
 \section{Inline mathematical functions}\label{InlineMathematicalFunctions}
 
 The inline mathematical functions are available by including the appropriate header file, e. g. vectormath\_exp.h for powers, logarithms and exponential functions, and vectormath\_trig.h for trigonometric functions. An advantage of the inline version is that the compiler can optimize the code across function calls, eliminate common sub-expressions, etc. The disadvantage is that you may get multiple instances of the same function taking up space in the code cache.
 \vspacesmall
 
-The speed of the inline functions is similar to or better than external vector function libraries in most cases and many times faster than standard (scalar) math function libraries. 
-Unlike many other mathematical function libraries, this library does not use lookup tables. This gives better parallelism, a very small load on the data cache, and a more predictable execution time.
-\vspacesmall
-
-The precision is good. The calculation error is typically below 2 ULP (Unit in the Last Place = least significant bit) on the output. (The relative value of one ULP is $2^{-52}$ for double precision and $2^{-23}$ for single precision). Cases where the error can exceed 3 ULP are mentioned under the specific function.
+The accuracy is good. The calculation error is typically below 2 ULP (Unit in the Last Place = least significant bit) on the output. (The relative value of one ULP is $2^{-52}$ for double precision and $2^{-23}$ for single precision). Where a function is steep, the maximum error corresponds to 1 ULP at the input. 
+Cases where the error can exceed 3 ULP are mentioned under the specific function.
 \vspacesmall
 
 The functions do not generate exceptions or set \codei{errno} when an input is out of range. This would be inefficient and it would be problematic for the error handler to detect which vector element caused the error. Instead, the functions return INF (infinity) or NAN (not a number) in case of error. Generally, an overflow will produce INF. A negative overflow produces -INF. An underflow towards zero returns 0. Other errors produce NAN. An efficient way of detecting errors is to let the INF and NAN codes propagate through the calculations and detect the error at the end of a series of calculations as explained on page \pageref{FloatingPointErrors}. It is possible to include an error code in a NAN and detect it with the function nan\_code on page \pageref{nanCode}.
 \vspacesmall
 
-Note that many of the inline math functions do not support subnormal numbers. Subnormal numbers may be treated as zero by the logarithm, exponential, power and root functions. It is recommended to set the “denormals are zero” and “flush to zero” flags by calling the function \codei{no\_subnormals()} first (see page \pageref{noSubnormals}). This may speed up some calculations and give more consistent results.
+Note that many of the inline math functions do not support subnormal numbers. Subnormal numbers may be treated as zero by the logarithm, exponential, power, and root functions. It is recommended to set the “denormals are zero” and “flush to zero” flags by calling the function \codei{no\_subnormals()} first (see page \pageref{noSubnormals}). This may speed up some calculations and give more consistent results.
 \vspacesmall
 
 A description of each mathematical function is given below.
@@ -334,23 +373,47 @@ A description of each mathematical function is given below.
 
 \section{Using an external library for mathematical functions}\label{ExternalMathLibrary}
 
-As an alternative to the inline mathematical functions, you can use an external function library named Intel SVML (Short Vector Math Library).
+A function library made by Intel called SVML (Short Vector Math Library) can be used as an alternative to the inline mathematical functions. SVML is a highly optimized function library that calculates mathematical functions on vectors.
 \vspacesmall
 
-You can use the Intel SVML library with any compiler. The SVML library is available for all platforms relevant to the vector class library. SVML is included with Intel C++ compilers, but it can be used with other compilers as well.
-The performance of SVML will usually be good on both Intel and non-Intel processors, as long as you are not using the Intel compiler.
-After installing an Intel compiler, you can look for the file name: svml\_dispmt.lib for Windows or libsvml.a for Linux. You also need the library libircmt.lib or libirc.a for a CPU dispatcher called by the svml library.
-You also need the library svmlpatch.lib if compiling for 64-bit Windows. This library is provided in the folder svml\_patch.
+The SVML library is part of an Intel compiler installation. The vector class library provides a header file named vectormath\_lib.h that makes it possible to use the Intel SVML library with other compilers. The SVML library is optimized for Intel processors, but it works well with AMD processors as well in almost all cases, unless you are using the Intel ICC or ICL compiler (named "classic"). The SVML library is available for all platforms relevant to the vector class library.
 \vspacesmall
 
-Link the necessary library files into your C++ project. Be sure to choose the 32-bit version or 64-bit version of each library according to the platform you are compiling for.
+\textbf{The SVML library for Windows can be obtained in the following way:}
+
+Install the Intel C++ compiler. You need the files named svml\_dispmt.lib and libircmt.lib. These files can be found in the installation directory, for example:\\
+C:\textbackslash Program Files (x86)\textbackslash Intel\textbackslash oneAPI\textbackslash compiler\textbackslash 2022.1.0\textbackslash windows\textbackslash compiler\textbackslash lib\textbackslash intel64\_win
 \vspacesmall
 
-Include the header file vectormath\_lib.h instead of vectormath\_exp.h, vectormath\_trig.h, or vectormath\_hyp.h if you want to use the SVML library. 
-It is not possible to mix the two kinds of mathematical functions (inline and library) in the same C++ file.
+Note that there is a 32-bit version and a 64-bit version of each library. We generally prefer to compile vector code for 64-bit mode, so you will probably need the 64-bit versions only. You also need the library file svmlpatch.lib which you can find at the VCL Github site under 
+\href{https://github.com/vectorclass/miscellaneous/tree/master/svmlpatch}{miscellaneous}. 
 \vspacesmall
 
-The available vector math functions are listed below. The efficiency is listed as poor because mathematical functions take more time to execute than most other functions, but they are still much faster than scalar alternatives. The details listed apply to the inline version. Details for the SVML library versions may be sought in the documentation for the specific library.
+svml\_dispmt.lib contains the mathematical vector functions. libircmt.lib contains a function dispatcher used by svml\_dispmt.lib. 
+The purpose of svmlpatch.lib is to fix a non-standard calling convention in the SVML library. svmlpatch.lib is only needed in 64-bit mode Windows.
+\vspacesmall
+
+Copy the library files svml\_dispmt.lib, svml\_dispmt.lib, and svmlpatch.lib to a suitable location and add them to your C++ project.
+\vspacesmall
+
+
+\textbf{The SVML library for Linux can be obtained in the following way:}
+
+Install the Intel C++ compiler. You need the files named libsvml.a and libirc.a. These files can be found in the installation directory, for example:\\
+$\sim$/intel/oneapi/compiler/2022.1.0/linux/compiler/lib/intel64\_lin/
+\vspacesmall
+
+Note that there is a 32-bit version and a 64-bit version of each library. We generally prefer to compile vector code for 64-bit mode, so you will probably need the 64-bit version only. 
+\vspacesmall
+
+libsvml.a contains the mathematical vector functions, and libircmt.a contains a function dispatcher used by libsvml.a. Copy these two library files to a suitable location and add them to your C++ project.
+\vspacesmall
+
+
+\textbf{Using the library functions in vector code:}
+
+Include the header file vectormath\_lib.h if you want to use the SVML library. Do not include vectormath\_exp.h, vectormath\_trig.h, or vectormath\_hyp.h. 
+It is not possible to mix the two kinds of mathematical functions (inline and library) in the same C++ file. The available vector math functions are listed below.
 \vspacesmall
 
 
@@ -360,7 +423,7 @@ The available vector math functions are listed below. The efficiency is listed a
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
 \bfseries Function & pow(vector, vector), pow(vector, scalar) \\ \hline
-\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Defined for & single and double precision floating point vectors \\ \hline
 \bfseries Inline version & vectormath\_exp.h \\ \hline
 \bfseries Library version & vectormath\_lib.h \\ \hline
 \bfseries Description & pow(a,b) = $a^b$ \newline 
@@ -419,7 +482,7 @@ Vec4f c = pow_const(a, 3);  // c = (0.0f, 1.0f, 8.0f, 27.0f)
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
 \bfseries Function & pow\_ratio(vector x, const int a, const int b) \\ \hline
-\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Defined for & single and double precision floating point vectors \\ \hline
 \bfseries Inline version & vectormath\_exp.h \\ \hline
 \bfseries Library version & not available \\ \hline
 \bfseries Description & Raises all elements of x to the rational power a/b.\newline
@@ -500,7 +563,6 @@ Use pow or pow\_const instead if x is an integer. \\ \hline
 \end{tabular}
 \begin{lstlisting}[frame=none]
 // Example:
-#define VCL_FASTEXP
 #include "vectormath_exp.h"
 Vec16f a, b;
 b = exp10(a); 
@@ -511,7 +573,7 @@ b = exp10(a);
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
 \bfseries Function & log \\ \hline
-\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Defined for & single and double precision floating point vectors \\ \hline
 \bfseries Inline version & vectormath\_exp.h \\ \hline
 \bfseries Library version & vectormath\_lib.h \\ \hline
 \bfseries Description & natural logarithm \\ \hline
@@ -524,7 +586,7 @@ b = exp10(a);
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
 \bfseries Function & log1p \\ \hline
-\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Defined for & single and double precision floating point vectors \\ \hline
 \bfseries Inline version & vectormath\_exp.h \\ \hline
 \bfseries Library version & vectormath\_lib.h \\ \hline
 \bfseries Description & log(1+x) \newline
@@ -538,7 +600,7 @@ Useful to avoid loss of precision if x is close to 0 \\ \hline
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
 \bfseries Function & log2 \\ \hline
-\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Defined for & single and double precision floating point vectors \\ \hline
 \bfseries Inline version & vectormath\_exp.h \\ \hline
 \bfseries Library version & vectormath\_lib.h \\ \hline
 \bfseries Description & logarithm base 2  \\ \hline
@@ -551,7 +613,7 @@ Useful to avoid loss of precision if x is close to 0 \\ \hline
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
 \bfseries Function & log10 \\ \hline
-\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Defined for & single and double precision floating point vectors \\ \hline
 \bfseries Inline version & vectormath\_exp.h \\ \hline
 \bfseries Library version & vectormath\_lib.h \\ \hline
 \bfseries Description & logarithm base 10  \\ \hline
@@ -564,7 +626,7 @@ Useful to avoid loss of precision if x is close to 0 \\ \hline
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
 \bfseries Function & cbrt \\ \hline
-\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Defined for & single and double precision floating point vectors \\ \hline
 \bfseries Inline version & vectormath\_exp.h \\ \hline
 \bfseries Library version & vectormath\_lib.h \\ \hline
 \bfseries Description & cube root  \\ \hline
@@ -578,10 +640,8 @@ Useful to avoid loss of precision if x is close to 0 \\ \hline
 \vspacebig
 
 
-
 \section{Trigonometric functions and inverse trigonometric functions}
 All angles are in radians.
-
 
 \vspacesmall
 \begin{tabular}{|p{30mm}|p{120mm}|}
@@ -591,7 +651,7 @@ All angles are in radians.
 \bfseries Inline version & vectormath\_trig.h \\ \hline
 \bfseries Library version & vectormath\_lib.h \\ \hline
 \bfseries Description & sine function \\ \hline
-\bfseries Range & Defined for abs(x) \textless{} $10^8$. 0 for big x \\ \hline
+\bfseries Range & abs(x) is limited to 314, 1.E7, 1.E15 for half, single, and double precision, respectively. This limit is lower if FMA instructions are not supported. The result is 0 for big x. The result may be 0 or NAN when the input is infinity depending on the implementation. \\ \hline
 \bfseries Efficiency & poor \\ \hline
 \end{tabular}
 \begin{lstlisting}[frame=none]
@@ -610,7 +670,7 @@ Vec4f b = sin(a);               // sine function
 \bfseries Inline version & vectormath\_trig.h \\ \hline
 \bfseries Library version & vectormath\_lib.h \\ \hline
 \bfseries Description & cosine function \\ \hline
-\bfseries Range & Defined for abs(x) \textless{} $10^8$. 1 for big x \\ \hline
+\bfseries Range & abs(x) is limited to 314, 1.E7, 1.E15 for half, single, and double precision, respectively. This limit is lower if FMA instructions are not supported. The result is 1 for big x. The result may be 1 or NAN when the input is infinity depending on the implementation \\ \hline
 \bfseries Efficiency & poor \\ \hline
 \end{tabular}
 \vspacebig
@@ -621,9 +681,9 @@ Vec4f b = sin(a);               // sine function
 \bfseries Function & sincos \\ \hline
 \bfseries Defined for & all floating point vector classes \\ \hline
 \bfseries Inline version & vectormath\_trig.h \\ \hline
-\bfseries Library version & vectormath\_lib.h (some platforms only) \\ \hline
+\bfseries Library version & vectormath\_lib.h (not with MS compiler) \\ \hline
 \bfseries Description & sine and cosine computed simultaneously.\\ \hline
-\bfseries Range & Defined for abs(x) \textless{} $10^8$. 0 and 1 for big x \\ \hline
+\bfseries Range & abs(x) is limited to 314, 1.E7, 1.E15 for half, single, and double precision, respectively. This limit is lower if FMA instructions are not supported. The result is 0 and 1 for big x. The result may or may not be NAN when the input is infinity. \\ \hline
 \bfseries Efficiency & faster than computing sin and cos separately \\ \hline
 \end{tabular}
 \begin{lstlisting}[frame=none]
@@ -644,9 +704,22 @@ s = sincos(&c, a);
 \bfseries Inline version & vectormath\_trig.h \\ \hline
 \bfseries Library version & vectormath\_lib.h \\ \hline
 \bfseries Description & tangent function \\ \hline
-\bfseries Range & Defined for abs(x) \textless{} $10^7$. 0 for big x \newline
-tan($\pi/2$) will not produce infinity because the value of $\pi/2$ cannot be represented exactly as a floating point number. The output will be big, though, when the input is as close to $\pi/2$ as possible.\\ \hline
+\bfseries Range & abs(x) is limited to 314, 1.E7, 1.E15 for half, single, and double precision, respectively. This limit is lower if FMA instructions are not supported. The result is 0 for big x. The result may be 0 or NAN when the input is infinity depending on the implementation. \\ \hline
 \bfseries Efficiency & poor \\ \hline
+\end{tabular}
+\vspacebig
+
+\vspacesmall
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & sinpi, cospi, sincospi, tanpi \\ \hline
+\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Inline version & vectormath\_trig.h \\ \hline
+\bfseries Library version & vectormath\_lib.h. sincospi not available \\ \hline
+\bfseries Description & sinpi(x) = sin(pi*x), etc. \newline
+The ...pi functions are more accurate than the normal trigonometric functions when x is a multiple or simple fraction of $\pi$ or x is high. For example, tanpi(0.5) gives INF while tan(pi*0.5) gives a high number less than INF because $\pi/2$ cannot be represented exactly. (tanpi(n+0.5) gives INF for n even, and -INF for n odd, in accordance with the IEEE754-2019 standard. The standard for signed zero results is not necessarily followed). \\ \hline
+\bfseries Range & numerically high values of x are interpreted as even integers, giving exact results. The result may or may not be NAN when the input is infinity. \\ \hline
+\bfseries Efficiency & same as normal trigonometric functions, or slightly better \\ \hline
 \end{tabular}
 \vspacebig
 
@@ -654,7 +727,7 @@ tan($\pi/2$) will not produce infinity because the value of $\pi/2$ cannot be re
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
 \bfseries Function & asin \\ \hline
-\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Defined for & single and double precision floating point vectors \\ \hline
 \bfseries Inline version & vectormath\_trig.h \\ \hline
 \bfseries Library version & vectormath\_lib.h \\ \hline
 \bfseries Description & inverse sine function \\ \hline
@@ -667,7 +740,7 @@ tan($\pi/2$) will not produce infinity because the value of $\pi/2$ cannot be re
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
 \bfseries Function & acos \\ \hline
-\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Defined for & single and double precision floating point vectors \\ \hline
 \bfseries Inline version & vectormath\_trig.h \\ \hline
 \bfseries Library version & vectormath\_lib.h \\ \hline
 \bfseries Description & inverse cosine function \\ \hline
@@ -680,7 +753,7 @@ tan($\pi/2$) will not produce infinity because the value of $\pi/2$ cannot be re
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
 \bfseries Function & atan \\ \hline
-\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Defined for & single and double precision floating point vectors \\ \hline
 \bfseries Inline version & vectormath\_trig.h \\ \hline
 \bfseries Library version & vectormath\_lib.h \\ \hline
 \bfseries Description & Inverse tangent \\ \hline
@@ -693,7 +766,7 @@ tan($\pi/2$) will not produce infinity because the value of $\pi/2$ cannot be re
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
 \bfseries Function & atan2 \\ \hline
-\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Defined for & single and double precision floating point vectors \\ \hline
 \bfseries Inline version & vectormath\_trig.h \\ \hline
 \bfseries Library version & vectormath\_lib.h \\ \hline
 \bfseries Description & Inverse tangent with two parameters, x and y, gives the angle to a point in the (x,y) plane \\ \hline
@@ -710,7 +783,7 @@ The result of atan2(0,0) is 0 by convention\\ \hline
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
 \bfseries Function & sinh \\ \hline
-\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Defined for & single and double precision floating point vectors \\ \hline
 \bfseries Inline version & vectormath\_hyp.h \\ \hline
 \bfseries Library version & vectormath\_lib.h \\ \hline
 \bfseries Description & hyperbolic sine \\ \hline
@@ -723,7 +796,7 @@ The result of atan2(0,0) is 0 by convention\\ \hline
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
 \bfseries Function & cosh \\ \hline
-\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Defined for & single and double precision floating point vectors \\ \hline
 \bfseries Inline version & vectormath\_hyp.h \\ \hline
 \bfseries Library version & vectormath\_lib.h \\ \hline
 \bfseries Description & hyperbolic cosine \\ \hline
@@ -736,7 +809,7 @@ The result of atan2(0,0) is 0 by convention\\ \hline
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
 \bfseries Function & tanh \\ \hline
-\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Defined for & single and double precision floating point vectors \\ \hline
 \bfseries Inline version & vectormath\_hyp.h \\ \hline
 \bfseries Library version & vectormath\_lib.h \\ \hline
 \bfseries Description & hyperbolic tangent \\ \hline
@@ -748,7 +821,7 @@ The result of atan2(0,0) is 0 by convention\\ \hline
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
 \bfseries Function & asinh \\ \hline
-\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Defined for & single and double precision floating point vectors \\ \hline
 \bfseries Inline version & vectormath\_hyp.h \\ \hline
 \bfseries Library version & vectormath\_lib.h \\ \hline
 \bfseries Description & inverse hyperbolic sine \\ \hline
@@ -760,7 +833,7 @@ The result of atan2(0,0) is 0 by convention\\ \hline
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
 \bfseries Function & acosh \\ \hline
-\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Defined for & single and double precision floating point vectors \\ \hline
 \bfseries Inline version & vectormath\_hyp.h \\ \hline
 \bfseries Library version & vectormath\_lib.h \\ \hline
 \bfseries Description & inverse hyperbolic cosine \\ \hline
@@ -772,7 +845,7 @@ The result of atan2(0,0) is 0 by convention\\ \hline
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
 \bfseries Function & atanh \\ \hline
-\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Defined for & single and double precision floating point vectors \\ \hline
 \bfseries Inline version & vectormath\_hyp.h \\ \hline
 \bfseries Library version & vectormath\_lib.h \\ \hline
 \bfseries Description & inverse hyperbolic tangent \\ \hline
@@ -787,7 +860,7 @@ The result of atan2(0,0) is 0 by convention\\ \hline
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
 \bfseries Function & erf \\ \hline
-\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Defined for & single and double precision floating point vectors \\ \hline
 \bfseries Inline version & not available \\ \hline
 \bfseries Library version & vectormath\_lib.h \\ \hline
 \bfseries Description & error function \\ \hline
@@ -799,7 +872,7 @@ The result of atan2(0,0) is 0 by convention\\ \hline
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
 \bfseries Function & erfc \\ \hline
-\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Defined for & single and double precision floating point vectors \\ \hline
 \bfseries Inline version & not available \\ \hline
 \bfseries Library version & vectormath\_lib.h \\ \hline
 \bfseries Description & error function complement \\ \hline
@@ -811,7 +884,7 @@ The result of atan2(0,0) is 0 by convention\\ \hline
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
 \bfseries Function & erfinv \\ \hline
-\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Defined for & single and double precision floating point vectors \\ \hline
 \bfseries Inline version & not available \\ \hline
 \bfseries Library version & vectormath\_lib.h \\ \hline
 \bfseries Description & inverse error function \\ \hline
@@ -823,7 +896,7 @@ The result of atan2(0,0) is 0 by convention\\ \hline
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
 \bfseries Function & cdfnorm \\ \hline
-\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Defined for & single and double precision floating point vectors \\ \hline
 \bfseries Inline version & not available \\ \hline
 \bfseries Library version & vectormath\_lib.h \\ \hline
 \bfseries Description & cumulative normal distribution function \\ \hline
@@ -835,7 +908,7 @@ The result of atan2(0,0) is 0 by convention\\ \hline
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
 \bfseries Function & cdfnorminv \\ \hline
-\bfseries Defined for & all floating point vector classes \\ \hline
+\bfseries Defined for & single and double precision floating point vectors \\ \hline
 \bfseries Inline version & not available \\ \hline
 \bfseries Library version & vectormath\_lib.h \\ \hline
 \bfseries Description & inverse cumulative normal distribution function \\ \hline
@@ -846,7 +919,11 @@ The result of atan2(0,0) is 0 by convention\\ \hline
 \label{nanCode}
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
-\bfseries Function & Vec4ui nan\_code(Vec4f) \newline
+\bfseries Function & 
+Vec8us nan\_code(Vec8h)\newline
+Vec16us nan\_code(Vec16h)\newline
+Vec32us nan\_code(Vec32h)\newline
+Vec4ui nan\_code(Vec4f)\newline
 Vec8ui nan\_code(Vec8f)\newline
 Vec16ui nan\_code(Vec16f)\newline
 Vec2uq nan\_code(Vec2d)\newline
@@ -856,7 +933,7 @@ Vec8uq nan\_code(Vec8d) \\ \hline
 \bfseries Inline version & vectormath\_exp.h \\ \hline
 \bfseries Library version & not available \\ \hline
 \bfseries Description & Extracts an error code hidden as payload in a NAN. This code can be generated with the functions nan4f etc. (page \pageref{nan4f}) and propagated through a series of calculations. When two NANs are combined (e.g. NAN1+NAN2), current processors propagate the first one. NANs produced by CPU instructions, such as 0./0. or sqrt(-1.) have a code of zero. NANs cannot propagate through integers and booleans.\newline
-The return value is (0x00400000 + code) for a quiet NAN.
+The return value is the payload including the quiet bit. For double precision, the value is shifted 29 places to the right for the sake of compatibility with single precision.\newline
 The sign bit is ignored.\newline
 The return value is 0 for inputs that are not NAN. \\ \hline
 \bfseries Efficiency & medium \\ \hline

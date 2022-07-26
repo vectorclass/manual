@@ -12,7 +12,8 @@ The Vector Class Library is generally conforming to the new IEEE 754-2019 Standa
 \begin{description}
 
 \item[Subnormal numbers.]
-Subnormal numbers (also called denormal numbers) are numerically extremely small floating point numbers where the exponent is below the normal range. Some microprocessors are handling subnormal numbers in a very inefficient way that is more than a hundred times slower than for normal floating point numbers. You may call the function \codei{no\_subnormals()} to prevent this and treat subnormal numbers as zero. Some of the mathematical functions in VCL always treat subnormal numbers as zero for reasons of performance. This includes logarithm, exponential, and power functions.
+Subnormal numbers (also called denormal numbers) are numerically extremely small floating point numbers where the exponent is below the normal range. Some microprocessors are handling subnormal numbers in a very inefficient way that is more than a hundred times slower than for normal floating point numbers. You may call the function \codei{no\_subnormals()} to prevent this and treat subnormal numbers as zero in single and double precision floating point calculations. Calculations in half precision are generally efficient even when values are subnormal. 
+Some of the mathematical functions in VCL always treat subnormal numbers as zero for reasons of performance. This includes logarithm, exponential, and power functions.
 
 \item[Signed zero.]
 Signed zero is a controversial issue. The floating point standard defines two different zeroes: +0.0 and -0.0.
@@ -21,8 +22,7 @@ You may {} \codei{\#define SIGNED\_ZERO} {} if you want the sign of zero to conf
 IEEE 754-2019 standard, though this may slow down performance a little.
 \codei{SIGNED\_ZERO} may affect several functions, including
 \codei{round}, \codei{truncate}, \codei{floor}, \codei{ceil}, 
-\codei{maximum}, \codei{minimum}, \codei{cbrt}, \codei{pow\_ratio}, \codei{expm1}, \codei{log1p}. \\
-This feature is not supported in version 1.xx of VCL.
+\codei{maximum}, \codei{minimum}, \codei{cbrt}, \codei{pow\_ratio}, \codei{expm1}, \codei{log1p}.
 
 \item[No exception trapping.] \label{NoExceptionTrapping}
 Floating point errors are traditionally detected by trapping errors or relying on an \codei{errno} variable. These methods are not well suited for vector processing and out-of-order processing. This is explained in the document \href{https://www.agner.org/optimize/nan_propagation.pdf}{"NAN propagation versus fault trapping in floating point code", Agner Fog, 2019}.

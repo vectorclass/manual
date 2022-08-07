@@ -13,4 +13,4 @@ Various add-on packages for specific applictions are in
 
 To re-build the manual:  
 The pdf manual is built from the .tex files, using MiKTeX and Texmaker. 
-Run PDFLaTeX twice to fix forward references.
+Run LuaLaTeX twice to fix forward references.

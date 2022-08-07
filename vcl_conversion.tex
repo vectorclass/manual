@@ -80,12 +80,13 @@ b = a;           // b = (0x1000, 0x3002, 0x5004, 0x7006)
 
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
-\bfseries Function & reinterpret\_d, reinterpret\_f, reinterpret\_i \\ \hline
+\bfseries Function & reinterpret\_d, reinterpret\_f, reinterpret\_i, reinterpret\_h \\ \hline
 \bfseries Defined for & all integer and floating point vector classes \\ \hline
 \bfseries Description & Reinterprets a vector as a different type with the same total number of bits. No bits are changed, only interpreted differently (bit casting).\newline
 reinterpret\_d is used for converting to Vec2d, Vec4d, or Vec8d, \newline
-reinterpret\_f is used for converting to Vec4f, Vec8f, or Vc16f, \newline
-reinterpret\_i is used for converting to any integer vector type. \\ \hline
+reinterpret\_f is used for converting to Vec4f, Vec8f, or Vec16f, \newline
+reinterpret\_i is used for converting to any integer vector type, \newline
+reinterpret\_h is used for converting to Vec8h, Vec16h, or Vec32h. \\ \hline
 \bfseries Efficiency & good \\ \hline
 \end{tabular}
 \begin{lstlisting}[frame=none]
@@ -100,6 +101,9 @@ Vec4i b = reinterpret_i(a);
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
 \bfseries Function & 
+Vec8s roundi(Vec8h) \newline
+Vec16s roundi(Vec16h) \newline
+Vec32s roundi(Vec32h) \newline
 Vec4i roundi(Vec4f) \newline
 Vec8i roundi(Vec8f) \newline
 Vec16i roundi(Vec16f) \newline
@@ -107,7 +111,8 @@ Vec2q roundi(Vec2d) \newline
 Vec4q roundi(Vec4d) \newline
 Vec8q roundi(Vec8d) \\ \hline
 \bfseries Defined for & all floating point vector classes \\ \hline
-\bfseries Description & Rounds floating point numbers to nearest integer and returns an integer vector of the same size. Where two integers are equally near, the even integer is returned. \\ \hline
+\bfseries Description & Rounds floating point numbers to nearest integer and returns an integer vector of the same size. Where two integers are equally near, the even integer is returned. \newline
+INF input may give INT\_MAX or INT\_MIN depending on the implementation and the instruction set.\\ \hline
 \bfseries Efficiency & float types: good \newline
 double types: good if AVX512DQ instruction set, otherwise poor \\ \hline
 \end{tabular}
@@ -142,6 +147,9 @@ Vec4i b = round_to_int32(a);  // b = (1,2,2,2)
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
 \bfseries Function & 
+Vec8s truncatei(Vec8h) \newline
+Vec16s truncatei(Vec16h) \newline
+Vec32s truncatei(Vec32h) \newline
 Vec4i truncatei(Vec4f) \newline
 Vec8i truncatei(Vec8f)\newline
 Vec16i truncatei(Vec16f)\newline
@@ -149,7 +157,8 @@ Vec2q truncatei(Vec2d) \newline
 Vec4q truncatei(Vec4d) \newline
 Vec8q truncatei(Vec8d) \\ \hline
 \bfseries Defined for & all floating point vector classes \\ \hline
-\bfseries Description & truncates floating point numbers towards zero and returns signed integer vector of the same size. \\ \hline
+\bfseries Description & truncates floating point numbers towards zero and returns signed integer vector of the same size.  \newline
+INF input may give INT\_MAX or INT\_MIN depending on the implementation and the instruction set.\\ \hline
 \bfseries Efficiency & 
 float types: good \newline
 double types: good if AVX512DQ instruction set, otherwise poor  \\ \hline
@@ -225,6 +234,30 @@ Vec8f to\_float(Vec8d) \\ \hline
 \bfseries Description & converts floating point vectors from double precision to single precision. \\ \hline
 \bfseries Efficiency & good \\ \hline
 \end{tabular}
+\vspacesmall
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & 
+Vec4f convert8h\_4f(Vec8h) \newline
+Vec8f to\_float(Vec8h) \newline
+Vec16f to\_float(Vec16h) \\ \hline
+\bfseries Defined for & Vec8h, Vec16h \\ \hline
+\bfseries Description & converts floating point vectors from half precision to single precision. \\ \hline
+\bfseries Efficiency & good if F16C or AVX512-FP16 \\ \hline
+\end{tabular}
+\vspacebig
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & 
+Vec8h convert4f\_8h(Vec4f) \newline
+Vec8h to\_float16(Vec8f) \newline
+Vec16h to\_float16(Vec16f) \\ \hline
+\bfseries Defined for & Vec4f, Vec8f, Vec16f \\ \hline
+\bfseries Description & converts floating point vectors from single precision to half precision. \\ \hline
+\bfseries Efficiency & good if F16C or AVX512-FP16 \\ \hline
+\end{tabular}
 \vspacebig
 
 \begin{tabular}{|p{30mm}|p{120mm}|}
@@ -299,8 +332,7 @@ Vec2d c = to_double_high(a); // c = (2.0, 3.0)
 \hline
 \bfseries Method & concatenating vectors \\ \hline
 \bfseries Defined for & All 128-bit and 256-bit vector classes and corresponding boolean vector classes \\ \hline
-\bfseries Description & Two 128-bit vectors can be concatenated into one 256-bit vector of the corresponding type by calling a constructor. \newline
-Two 256-bit vectors can be concatenated into one 512-bit vector of the corresponding type by calling a constructor. \\ \hline
+\bfseries Description & Two vectors can be concatenated into one vector of the double size by calling a constructor or the function concatenate2. \\ \hline
 \bfseries Efficiency & good \\ \hline
 \end{tabular}
 \begin{lstlisting}[frame=none]
@@ -308,6 +340,7 @@ Two 256-bit vectors can be concatenated into one 512-bit vector of the correspon
 Vec4i a(10,11,12,13);
 Vec4i b(20,21,22,23);
 Vec8i c(a, b);    // c = (10,11,12,13,20,21,22,23)
+Vec8i d = concatenate2(a, b); // same as c
 \end{lstlisting}
 \vspacesmall
 
@@ -324,6 +357,21 @@ Vec8i c(a, b);    // c = (10,11,12,13,20,21,22,23)
 Vec8i a(10,11,12,13,14,15,16,17);
 Vec4i b = a.get_low();  // b = (10,11,12,13)
 Vec4i c = a.get_high(); // c = (14,15,16,17)
+\end{lstlisting}
+\vspacesmall
+
+
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Method & extend\_z \\ \hline
+\bfseries Defined for & All 128-bit and 256-bit vector classes and corresponding boolean vector classes \\ \hline
+\bfseries Description & The vector is extended to double size by adding zeroes. \\ \hline
+\bfseries Efficiency & good \\ \hline
+\end{tabular}
+\begin{lstlisting}[frame=none]
+// Example:
+Vec4i a(10,11,12,13);
+Vec8i b = extend_z(a);  // b = (10,11,12,13,0,0,0,0)
 \end{lstlisting}
 \vspacesmall
 
@@ -437,6 +485,15 @@ Vec4f c = compress(a, b); // c = (1.0f, 1.1f, 2.0f, 2.1f)
 \end{lstlisting}
 \vspacesmall
 
+\begin{tabular}{|p{30mm}|p{120mm}|}
+\hline
+\bfseries Function & compress\_saturated (with one vector parameter) \\ \hline
+\bfseries Defined for & Vec16s, Vec16us, Vec32s, Vec32us, Vec8i, Vec8ui, Vec16i, Vec16ui, Vec4q, Vec4uq, Vec8q, Vec8uq \\ \hline
+\bfseries Description & Packs an integer vector into a vector with the same number of elements and half the number of bits per element. 
+Overflow and underflow saturates \\ \hline
+\bfseries Efficiency & medium (worse than compress in most cases) \\ \hline
+\end{tabular}
+\vspacebig
 
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
@@ -457,6 +514,8 @@ Vec8s c = compress_saturated(a, b);
 // c = (10,11,12,13,20,21,22,23)
 \end{lstlisting}
 \vspacesmall
+
+
 
 
 \section{Conversion between boolean vector types}\label{ConversionBetweenBooleanTypes}

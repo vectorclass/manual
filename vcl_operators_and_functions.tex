@@ -119,7 +119,7 @@ Vec4ui d = c / const_uint(3); // d = (3, 3, 4, 4)
 \vspacesmall
 \begin{tabular}{|p{25mm}|p{100mm}|}
 \hline
-\bfseries Operator & \textless\textless, \textless\textless= \\ \hline
+\bfseries Operator & $<<$, $<<=$ \\ \hline
 \bfseries Defined for & all integer vector classes \\ \hline
 \bfseries Description & bit shift left. All vector elements are shifted by the same amount. \newline
 Shifting left by n is a fast way of multiplying by $2^n$ \\ \hline
@@ -135,7 +135,7 @@ Vec4i b = a << 2;         // b = (40, 44, 48, 52)
 \vspacesmall
 \begin{tabular}{|p{25mm}|p{100mm}|}
 \hline
-\bfseries Operator & \textgreater\textgreater, \textgreater\textgreater= \\ \hline
+\bfseries Operator & $>>$, $>>=$ \\ \hline
 \bfseries Defined for & all integer vector classes \\ \hline
 \bfseries Description & bit shift right. All vector elements are shifted by the same amount.\newline
 Unsigned integers use logical shift. \newline
@@ -299,7 +299,7 @@ Vec4i c = a ^ b;         // c = (30, 30, 26, 26)
 \begin{tabular}{|p{25mm}|p{100mm}|}
 \hline
 \bfseries Operator & $\sim$ \\ \hline
-\bfseries Defined for & all vector classes \\ \hline
+\bfseries Defined for & all boolean and integer vector classes \\ \hline
 \bfseries Description & bitwise not \\ \hline
 \bfseries Efficiency & good \\ \hline
 \end{tabular}
@@ -314,7 +314,7 @@ Vec4i b = ~a;            // b = (-11, -12, -13, -14)
 \begin{tabular}{|p{25mm}|p{100mm}|}
 \hline
 \bfseries Operator & ! \\ \hline
-\bfseries Defined for & all integer and floating point vector classes \\ \hline
+\bfseries Defined for & all vector classes \\ \hline
 \bfseries Description & logical not. Result is a boolean vector \\ \hline
 \bfseries Efficiency & good \\ \hline
 \end{tabular}
@@ -435,7 +435,7 @@ Division is faster for vectors of 16-bit integers than for vectors of 8-bit or 3
 \bfseries Function & horizontal\_add \\ \hline
 \bfseries Defined for & all integer vector classes \\ \hline
 \bfseries Description & calculates the sum of all vector elements \\ \hline
-\bfseries Efficiency & medium \\ \hline
+\bfseries Efficiency & medium. For best performance, use normal (vertical) addition where possible. \\ \hline
 \end{tabular}
 \begin{lstlisting}[frame=none]
 // Example:
@@ -464,7 +464,7 @@ int64_t b = horizontal_add_x(a);  // b = 46
 \hline
 \bfseries Function & horizontal\_min, horizontal\_max \\ \hline
 \bfseries Defined for & all integer vector classes \\ \hline
-\bfseries Description & Returns the lowest or highest element in a vector.\newline VCL version 2.00 or later \\ \hline
+\bfseries Description & Returns the lowest or highest element in a vector. \\ \hline
 \bfseries Efficiency & medium \\ \hline
 \end{tabular}
 \begin{lstlisting}[frame=none]
@@ -625,7 +625,7 @@ Vec16c b = shift_bytes_up<5>(a);
 \bfseries Function & horizontal\_add \\ \hline
 \bfseries Defined for & all floating point vector classes \\ \hline
 \bfseries Description & calculates the sum of all vector elements \\ \hline
-\bfseries Efficiency & medium \\ \hline
+\bfseries Efficiency & medium. For best performance, use normal (vertical) addition where possible. \\ \hline
 \end{tabular}
 \begin{lstlisting}[frame=none]
 // Example:
@@ -642,9 +642,11 @@ float b = horizontal_add(a);  // b = 4.6
 \bfseries Description & returns the biggest/smallest of two values \\ \hline
 \bfseries Efficiency & good \\ \hline
 \end{tabular}
+\vspacesmall
 
 \codei{max(a,b)} is equivalent to \codei{a > b ? a : b }\\
 \codei{min(a,b)} is equivalent to \codei{a < b ? a : b }\\
+\vspacesmall
 
 These functions will not return a NAN if the first parameter is NAN.\\
 These functions make no distinction between 0 and -0.
@@ -663,9 +665,11 @@ Vec4f c = max(a, b);         // c = (1.4f, 1.3f, 1.2f, 1.3f)
 \bfseries Description & returns the biggest/smallest of two values \\ \hline
 \bfseries Efficiency & good, but slower than max / min \\ \hline
 \end{tabular}
+\vspacesmall
 
 These functions are similar to max and min, but sure to propagate NAN values.\\
 The sign of zero is ignored unless SIGNED\_ZERO is defined.
+\vspacesmall
 
 \vspacesmall
 \begin{tabular}{|p{25mm}|p{100mm}|}
@@ -673,8 +677,7 @@ The sign of zero is ignored unless SIGNED\_ZERO is defined.
 \bfseries Function & horizontal\_min, horizontal\_max \\ \hline
 \bfseries Defined for & all floating point vector classes \\ \hline
 \bfseries Description & Returns the lowest or highest element in a vector.\newline
-NANs are propagated. The sign of zero is ignored. \newline
-VCL version 2.00 or later \\ \hline
+NANs are propagated. The sign of zero is ignored. \\ \hline
 \bfseries Efficiency & medium \\ \hline
 \end{tabular}
 \begin{lstlisting}[frame=none]
@@ -884,7 +887,7 @@ Vec4f b = ceil(a);   // b = (0.0f, 2.0f, 2.0f, 2.0f)
 \begin{tabular}{|p{25mm}|p{100mm}|}
 \hline
 \bfseries Function & approx\_recipr \\ \hline
-\bfseries Defined for & Vec4f, Vec8f, Vec16f \\ \hline
+\bfseries Defined for & single and half precision floating point vectors \\ \hline
 \bfseries Description & fast approximate calculation of reciprocal  \\ \hline
 \bfseries Precision & the relative accuracy depends on the instruction set:\newline
 Default: $2^{-11}$\newline
@@ -904,7 +907,7 @@ Vec4f c = a * approx_recipr(b);  // c approximates a/b
 \begin{tabular}{|p{25mm}|p{100mm}|}
 \hline
 \bfseries Function & approx\_rsqrt \\ \hline
-\bfseries Defined for & Vec4f, Vec8f, Vec16f \\ \hline
+\bfseries Defined for & single and half precision floating point vectors \\ \hline
 \bfseries Description & reciprocal square root. Fast approximate calculation of value to the power of -0.5 \\ \hline
 \bfseries Precision & the relative accuracy depends on the instruction set:\newline
 Default: $2^{-11}$\newline

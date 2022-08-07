@@ -143,7 +143,7 @@ Vec4i b = select(a>0, a+10, a-10); // b = (-11,-10,11,12)
 
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
-\bfseries Function & if\_add(boolean vector f, vector a, vector b) \\ \hline
+\bfseries Function & vector if\_add(boolean vector f, vector a, vector b) \\ \hline
 \bfseries Defined for & all integer and floating point vector classes \\ \hline
 \bfseries Description & conditional addition \newline
 result[i] = f[i] ? (a[i] + b[i]) : a[i] \\ \hline
@@ -158,7 +158,7 @@ Vec4i b = if_add(a < 0, a, 100);  // b = (99,0,1,2)
 
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
-\bfseries Function & if\_sub(boolean vector f, vector a, vector b) \\ \hline
+\bfseries Function & vector if\_sub(boolean vector f, vector a, vector b) \\ \hline
 \bfseries Defined for & all integer and floating point vector classes \\ \hline
 \bfseries Description & conditional subtraction \newline
 result[i] = f[i] ? (a[i] - b[i]) : a[i] \\ \hline

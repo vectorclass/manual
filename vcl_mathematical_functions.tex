@@ -376,7 +376,7 @@ A description of each mathematical function is given below.
 A function library made by Intel called SVML (Short Vector Math Library) can be used as an alternative to the inline mathematical functions. SVML is a highly optimized function library that calculates mathematical functions on vectors.
 \vspacesmall
 
-The SVML library is part of an Intel compiler installation. The vector class library provides a header file named vectormath\_lib.h that makes it possible to use the Intel SVML library with other compilers. The SVML library is optimized for Intel processors, but it works well with AMD processors as well in almost all cases, unless you are using the Intel ICC or ICL compiler (named "classic"). The SVML library is available for all platforms relevant to the vector class library.
+The SVML library is part of an Intel compiler installation. The vector class library provides a header file named vectormath\_lib.h that makes it possible to use the Intel SVML library with other compilers. The SVML library is optimized for Intel processors, but it works well with AMD processors as well according to my tests, unless you are using the Intel ICC or ICL compiler (named "classic"). Use the newer Intel ICPX compiler instead, or any other compiler. The SVML library is available for all platforms relevant to the vector class library.
 \vspacesmall
 
 \textbf{The SVML library for Windows can be obtained in the following way:}
@@ -715,9 +715,9 @@ s = sincos(&c, a);
 \bfseries Function & sinpi, cospi, sincospi, tanpi \\ \hline
 \bfseries Defined for & all floating point vector classes \\ \hline
 \bfseries Inline version & vectormath\_trig.h \\ \hline
-\bfseries Library version & vectormath\_lib.h. sincospi not available \\ \hline
+\bfseries Library version & vectormath\_lib.h. Not with Intel compiler. sincospi not available \\ \hline
 \bfseries Description & sinpi(x) = sin(pi*x), etc. \newline
-The ...pi functions are more accurate than the normal trigonometric functions when x is a multiple or simple fraction of $\pi$ or x is high. For example, tanpi(0.5) gives INF while tan(pi*0.5) gives a high number less than INF because $\pi/2$ cannot be represented exactly. (tanpi(n+0.5) gives INF for n even, and -INF for n odd, in accordance with the IEEE754-2019 standard. The standard for signed zero results is not necessarily followed). \\ \hline
+The ...pi functions are more accurate than the normal trigonometric functions when x is a multiple or simple fraction of $\pi$ or x is high. For example, tanpi(0.5) gives INF while tan(pi*0.5) gives a high number less than INF because $\pi/2$ cannot be represented exactly. tanpi(n+0.5) gives INF for n even, and -INF for n odd, in accordance with the IEEE754-2019 standard. The standard for signed zero results is not necessarily followed. \\ \hline
 \bfseries Range & numerically high values of x are interpreted as even integers, giving exact results. The result may or may not be NAN when the input is infinity. \\ \hline
 \bfseries Efficiency & same as normal trigonometric functions, or slightly better \\ \hline
 \end{tabular}

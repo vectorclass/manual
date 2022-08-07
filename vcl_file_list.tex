@@ -45,6 +45,10 @@ vectorf512.h & Defines classes, operators and functions for floating point vecto
 
 vectorf512e.h & Defines classes, operators and functions for floating point vectors with a total size of 512 bits for instruction sets lower than AVX512F. Included by vectorclass.h if appropriate \\ \hline
 
+vectorfp16.h & Defines classes, operators and functions for half precision floating point vectors of all sizes, including mathematical functions, for AVX512-FP16 \\ \hline
+
+vectorfp16e.h & Defines emulating classes, operators and functions for half precision floating point vectors of all sizes, including mathematical functions, for processors without AVX512-FP16 \\ \hline
+
 vector\_convert.h & Defines functions for conversion between different vector sizes, as well as some generic function templates. \\ \hline
 
 vectormath\_exp.h & Optional inline mathematical functions: power, logarithms and exponential functions \\ \hline
@@ -67,7 +71,7 @@ changelog.txt & VCL version history \\ \hline
 
 miscellaneous/svmlpatch & Folder containing the library svmlpatch.lib as well as the source code to build it. Used for fixing a compatibillity issue with Intel SVML library in 64-bit Windows \\ \hline
 
-testbench & Folder containing a test bench for testing the VCL library. This is used in the development of VCL, and is not needed by programmers using the VCL. Includes code and documentation. \\ \hline
+testbench & Folder containing test bench files for testing the VCL library. This is used in the development of VCL, and is not needed by programmers using the VCL. Includes code and documentation. \\ \hline
 
 \end{longtable}
 %\end{tabular}

@@ -5,7 +5,7 @@
 
 \chapter{Introduction}\label{chap:Introduction}
 \flushleft
-The VCL vector class library is a tool that allows C++ programmers to make their code much faster by handling multiple data in parallel. Modern CPU’s have \textit{Single Instruction Multiple Data} (SIMD) instructions for handling vectors of multiple data elements in parallel. The compiler may be able to use SIMD instructions automatically in simple cases, but a human programmer is often able to do it better by organizing data into vectors that fit the SIMD instructions. The VCL library is a tool that makes it easier for the programmer to write vector code without having to use assembly language or intrinsic functions. Let us explain this with an example:
+The VCL vector class library is a tool that helps C++ programmers make their code much faster by handling multiple data in parallel. Modern CPU’s have \textit{Single Instruction Multiple Data} (SIMD) instructions for handling vectors of multiple data elements in parallel. The compiler may be able to use SIMD instructions automatically in simple cases, but a human programmer is often able to do it better by organizing data into vectors that fit the SIMD instructions. The VCL library is a tool that makes it easier for the programmer to write vector code without having to use assembly language or intrinsic functions. Let us explain this with an example:
 \vspacesmall
 
 \begin{example}
@@ -45,7 +45,7 @@ Example \ref{exampleArrayLoopVect} does the same as example \ref{exampleArrayLoo
 
 \section{How it works} \label{HowItWorks}
 The type \codei{Vec8f} in example \ref{exampleArrayLoopVect} is a class that encapsulates the intrinsic type 
-\codei{\_\_m256} which represents a 256-bit vector register holding 8 floating point numbers of 32 bits each. The overloaded operators \codei{+} and \codei{*} represent the SIMD instructions for adding and multiplying vectors. These operators are inlined so that no extra code is generated other than the SIMD instructions. All you have to do to get access to these vector operations is to include "vectorclass.h" in your C++ code and specify the desired instruction set (e.g. SSE2, AVX2, or AVX512) in your compiler options.
+\codei{\_\_m256} which represents a 256-bit vector register holding 8 floating point numbers of 32 bits each. The overloaded operators \codei{+} and \codei{*} represent the SIMD instructions for adding and multiplying vectors. These operators are inlined so that no extra code is generated other than the SIMD instructions. All you have to do to get access to these vector operations is to include "vectorclass.h" in your C++ code and specify the desired instruction set (e.g. SSE2, AVX2, or AVX512) in the compiler options.
 \vspacesmall
 
 The code in example \ref{exampleArrayLoopVect} can be reduced to just 4 machine instructions if the instruction set AVX or higher is enabled. The SSE2 instruction set will give 8 machine instructions because the maximum vector register size is only half as big for instruction sets prior to AVX. The code in example \ref{exampleArrayLoop1} will generate approximately 44 instructions if the compiler does not automatically vectorize the code.
@@ -55,7 +55,7 @@ The code in example \ref{exampleArrayLoopVect} can be reduced to just 4 machine 
 
 \begin{itemize}
 \item Vectors of 8-, 16-, 32- and 64-bit integers, signed and unsigned
-\item Vectors of single and double precision floating point numbers
+\item Vectors of half precision, single precision, and double precision floating point numbers
 \item Total vector size 128, 256, or 512 bits
 \item Defines almost all common operators
 \item Boolean operations and branches on vector elements
@@ -71,7 +71,7 @@ The code in example \ref{exampleArrayLoopVect} can be reduced to just 4 machine 
 \vspacesmall
 
 \section{Instruction sets supported} \label{InstructionSetsSupported}
-Since 1997, each new CPU model has extended the x86 instruction set with more SIMD instructions. The VCL library requires the SSE2 instruction set as a minimum, and supports SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX, AVX2, XOP, FMA3, FMA4, and AVX512F/VL/BW/DQ/ER, as well as the new AVX512VBMI/VBMI2.
+Since 1997, every new CPU model has extended the x86 instruction set with more SIMD instructions. The VCL library requires the SSE2 instruction set as a minimum, and supports SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX, AVX2, XOP, FMA3, FMA4, and AVX512F/VL/BW/DQ, as well as the new AVX512VBMI/VBMI2 and AVX512-FP16.
 \vspacesmall
 
 \section{Platforms supported} \label{PlatformsSupported}
@@ -87,10 +87,10 @@ https://bitbucket.org/edanor/umesimd/
 The vector class library could not have been made with any other programming language than C++, because only C++ combines all the necessary features: low-level programming such as bit manipulation and intrinsic functions, high-level programming features such as classes and templates, operator overloading, metaprogramming, compiling to machine code without any intermediate byte code, and highly optimizing compilers with support for the many different instruction sets and platforms.
 \vspacesmall
 
-The vector class library works with Microsoft, Intel, Gnu, and Clang C++ compilers. It is recommended to use the newest version of the compiler if the newest instruction sets are used. The best optimization is obtained with the Gnu and Clang compilers.
+The vector class library works with Gnu, Clang, Microsoft, and Intel C++ compilers. It is recommended to use the newest version of the compiler if the newest instruction sets are used. The best optimization is obtained with the Gnu and Clang compilers.
 \vspacesmall
 
-The vector class library version 1.xx uses standard C++0x, while version 2.xx requires C++17 or later. The Intel compiler currently works only with version 1.xx of the library.
+The vector class library version 2.xx requires the C++17 or later standard for the C++ language. The vector class library version 1.xx, using standard C++0x, should only be used if it is not possible to use a compiler with C++17 support.
 \vspacesmall
 
 \section{Intended use} \label{IntendedUse}
@@ -112,7 +112,7 @@ The following cases illustrate the use of metaprogramming in VCL:
 \begin{itemize}
 \item Compiling for different instruction sets. If you are using a bigger vector size than supported by the instruction set, then the VCL code will split the big vector into multiple smaller vectors. If you compile the same code again for a higher instruction set, then you will get a more efficient program with full-size vector registers.
 
-\item Permute, blend, and gather functions. There are many different machine instructions that move data between different vector elements. Some of these instructions can only do very specific data permutations. The VCL uses quite a lot of metaprogramming to find the instruction or sequence of instructions that best fits the specific permutation pattern specified. Often, the higher instruction sets give more efficient results.
+\item Permute, blend, and gather functions. There are many different machine instructions that move data between different vector elements. Some of these instructions can only do very specific data permutations. The VCL uses quite a lot of metaprogramming to find the instruction or sequence of instructions that best fits the specified permutation pattern. Often, the higher instruction sets give more efficient results.
 
 \item Integer division. Integer division can be done faster by a combination of multiplication and bit-shifting. The VCL can use metaprogramming to find the optimal division method and calculate the multiplication factor and shift count at compile time if the divisor is a known constant. 
 See page \pageref{HowVCLUsesMetaprogramming} for details.
@@ -128,7 +128,7 @@ The newest version of the vector class library is available from
 
 
 \section{Support} \label{Support}
-The vector class library is not a commercial product, but free and open source code. 
+The vector class library is not a commercial product, but free and open source. 
 You cannot expect the kind of support you would get with a paid product. 
 \vspacesmall
 
@@ -137,11 +137,11 @@ A discussion board for software developed by Agner Fog is currently provided at
 \vspacesmall
 
 Programming questions should preferably be asked at 
-\href{https://stackoverflow.com}{Stackoverflow} using the tag \bf{vector-class-library}.
+\href{https://stackoverflow.com}{Stackoverflow.com} using the tag {\bfseries vector-class-library}{\normalfont .} % why does it not return to normal font without this?
 \vspacesmall
 
 
-\section{License} \label{License}
+\section{License}\label{License}
 The Vector class library is licensed under the Apache License, version 2.0.
 \vspacesmall
 
@@ -150,7 +150,7 @@ You may obtain a copy of the license at
 \href{https://www.apache.org/licenses/LICENSE-2.0}{www.apache.org/licenses/LICENSE-2.0}
 \vspacesmall
 
-I have previously sold commercial licenses to VCL. Now, I have decided for a more permissive license because the selling of commercial licenses gave a lot of administrative and bureaucratic problems for just a small profit. Instead of selling commercial licenses, I am now suggesting that commercial users make a donation to an open source project of your own choosing or to an organization promoting open source software.
+I have previously sold commercial licenses to VCL. Now, I have decided for a more permissive license. Instead of selling commercial licenses, I am now suggesting that commercial users make a donation to an open source project of your own choosing or to an organization promoting open source software.
 \vspacesmall
 
 
@@ -200,7 +200,10 @@ int main() {
 \vspacesmall
 
 \section{Overview of vector classes} \label{OverviewOfVectorClasses}
-The vector class library supports vectors of 8-bit, 16-bit, 32-bit and 64-bit signed and unsigned integers, 32-bit single precision floating point numbers, and 64-bit double precision floating point numbers. A vector contains multiple elements of the same type to a total size of 128, 256 or 512 bits. The vector elements are indexed, starting at 0 for the first element.
+The vector class library supports vectors of 8-bit, 16-bit, 32-bit and 64-bit signed and unsigned integers, 32-bit single precision floating point numbers, and 64-bit double precision floating point numbers. See page \pageref{HalfPrecision} for optional support for 16-bit half precision floating point numbers. 
+\vspacesmall
+
+A vector contains multiple elements of the same type to a total size of 128, 256 or 512 bits. The vector elements are indexed, starting at 0 for the first element.
 \vspacesmall
 
 The constant MAX\_VECTOR\_SIZE indicates the maximum vector size. The default maximum vector size is 512 in the current version and possibly larger in future versions. You can disable 512-bit vectors by defining
@@ -297,6 +300,129 @@ Vec8db   & \centering Vec8d           & \centering   8 & \centering   8       & 
 \end{table}
 
 The size of the boolean vectors depends on the instruction set (see page \pageref{tableBooleanVectorSizes}).
+\vspacebig
+
+
+\section{Half precision floating point vectors} \label{HalfPrecision}
+Half precision floating point numbers are represented by 16 bits (one sign bit, five exponent bits, and ten bits for the mantissa). Half precision is useful for sound, video, and artificial intelligence applications where the low precision is acceptable. A 512-bit vector register can contain 32 half-precision numbers and do 32 arithmetic operations simultaneously with a single instruction. 
+\vspacesmall
+
+Microprocessors have various levels of support for half precision. The F16C instruction set extension supports conversion between half precision and single precision, but not arithmetic operations on half precision numbers. F16C has been included in Intel and AMD processors since 2013-2014. The newer AVX512-FP16 instruction set extension implements a full set of arithmetic operations on half precision numbers. The AVX512-FP16 instruction set will be supported by Intel's Sapphire Rapids processor, expected to be introduced in late 2022.
+\vspacesmall
+
+The Vector Class Library supports half precision floating point vectors when the following header file is included:
+\begin{lstlisting}[frame=single]
+#include "vectorfp16.h"
+\end{lstlisting}
+\vspacesmall
+
+The performance of half-precision vector calculations is highly dependent on the instruction set. Full performance is obtained only when the AVX512-FP16 instruction set is supported by the microprocessor and enabled in the compiler options.
+\vspacesmall
+
+The earlier F16C instruction set allows efficient conversion between single precision and half precision, but not arithmetic operations on half precision vectors. With F16C, arithmetic operations are emulated by converting the operands from half precision to single precision and converting each result back to half precision. This will be inefficient because intermediate results are converted back and forth, as illustrated in this example:
+\vspacesmall
+
+\begin{lstlisting}[frame=single]
+#include "vectorfp16.h"
+Vec8h a, b, c, d;   // vectors of eight half precision numbers
+d = a + b + c;      // calculate sums
+\end{lstlisting}
+\vspacesmall
+
+If this example is compiled with F16C, but not AVX512-FP16, then the code will convert a and b from half precision to single precision, calculate a+b with single precision, convert a+b back to half precision, then convert a+b to single precision again, convert c to single precision, do the next addition with single precision, and convert the final sum a+b+c back to half precision. This is of course not efficient. It is more efficient to do all the intermediate calculations with single precision:
+\vspacesmall
+
+\begin{lstlisting}[frame=single]
+#include "vectorfp16.h"
+Vec8h a, b, c, d;         // half precision vectors
+Vec8f aa = to_float(a);   // convert to single precision
+Vec8f bb = to_float(b);
+Vec8f cc = to_float(c);
+Vec8f dd = aa + bb + cc;  // do the calculations
+d = to_float16(dd);       // convert the result to half precision
+\end{lstlisting}
+\vspacesmall
+
+The ability to emulate half precision calculations as illustrated in the first example is useful for verifying half-precision code. This allows you to test whether half precision is sufficient for a particular task even when you do not have access to a computer with AVX512-FP16. If the goal is to get maximum performance then you should use half precision only on microprocessors with AVX512-FP16, but use single precision on microprocessors without AVX512-FP16.
+\vspacesmall
+
+The half precision code can run even on microprocessors without F16C, but this will be extremely slow because every conversion between single and half precision requires a long sequence of instructions. Therefore, it is important to enable F16C in the compiler when it is present. F16C is supported by some AMD and Intel processors that have AVX and all currently known processors that have AVX2 and later instruction sets. It may be useful to make a version of the code that uses conversion between single and half precision for processors that have both AVX2 and F16C, and a more efficient version that does calculations with half precision for processors that have AVX512-FP16. The functions \codei{hasF16C()} and \codei{hasAVX512FP16()} in instrset\_detect.cpp can be used for detecting microprocessor support for these instruction sets.
+\vspacesmall
+
+\subsection{Compiler support}
+The AVX512-FP16 instruction set is supported by the following compilers and later versions:\\
+g++ version 12.1.0 with binutils 2.38 \\
+clang++ version 14.0.0 \\
+Intel c++ compiler version 2021.2
+\vspacesmall
+
+The proper type for half precision scalars is \codei{\_Float16}. This type is supported by the g++ and some Intel compilers. It is supported on the Clang compiler only when AVX512-FP16 is enabled. The vector class library will emulate a type named \codei{Float16} if \codei{\_Float16} is not supported by the compiler. This emulation includes only the most basic operations and operators on half precision floating point scalars, such as $+-*/$ and conversion to and from \codei{float}. Other operators and functions on Float16 are not emulated. \codei{Float16} is defined as \codei{\_Float16} whenever \codei{\_Float16} is supported by the compiler.
+\vspacesmall
+
+Do not use the types \codei{\_\_fp16} and \codei{\_\_bf16} that are available on some compilers. \codei{\_\_fp16} is an interchange format, not an arithmetic format. This means that variables of type \codei{\_\_fp16} will be immediately converted to \codei{float} before any operation. \codei{\_\_bf16} is an incompatible format available on some systems. \codei{\_\_bf16} has 8 exponent bits and 7 mantissa bits where \codei{\_Float16} and \codei{\_\_fp16} have 5 exponent bits and 10 mantissa bits.
+\vspacesmall
+
+\subsection{Half precision vector classes}
+
+\begin {table}[H]
+\caption{Half precision floating point vector classes}
+\label{table:HalfVectorClasses}
+\begin{tabular}{|p{18mm}|p{18mm}|p{18mm}|p{18mm}|p{30mm}|}
+\hline
+\bfseries Vector class & \bfseries Precision &  \bfseries Elements per vector & \bfseries Total bits & \bfseries  Minimum
+\newline recommended \newline instruction set \\ \hline
+Vec8h  & \centering half & \centering  8 & \centering 128 & AVX512-FP16 \\ \hline
+Vec16h & \centering half & \centering 16 & \centering 256 & AVX512-FP16 \\ \hline
+Vec32h & \centering half & \centering 32 & \centering 512 & AVX512-FP16 \\ \hline
+\end{tabular}
+\end{table}
+\vspacesmall
+
+The corresponding boolean vector classes are Vec8hb, Vec16hb, and Vec32hb.
+\vspacesmall
+
+Subnormal numbers are supported for these vector classes regardless of the floating point control word. The floating point control word (see page \pageref{FPControlWordManipulationFunctions}) has no effect on half precision subnormal numbers.
+\vspacesmall
+
+\subsection{Functions and operators}
+The half precision vectors can be used with the same operators and general functions as single and double precision vectors. Some mathematical functions are supported for half precision, including exponential and trigonometric functions.
+\vspacesmall
+
+Complex number algebra and functions with half precision are supported. See  complexvec\_manual.pdf at 
+\href{https://github.com/vectorclass/add-on/tree/master/complex}{github}.
+\vspacesmall
+
+The following functions are available for conversion between single precision and half precision:
+
+\begin {table}[H]
+\caption{Conversion between single and half precision}
+\label{table:HalfVectorClasses}
+\begin{tabular}{|p{30mm}|p{35mm}|p{70mm}|}
+\hline
+\bfseries Function & \bfseries Conversion &  \bfseries Comment \\ \hline
+convert8h\_4f & Vec8h -> Vec4f & only lower half is converted \\ \hline
+to\_float  & Vec8h -> Vec8f &  \\ \hline
+to\_float  & Vec16h -> Vec16f &  \\ \hline
+convert4f\_8h & Vec4f -> Vec8h & upper half is zero \\ \hline
+to\_float16  & Vec8f -> Vec8h &  \\ \hline
+to\_float16  & Vec16f -> Vec16h &  \\ \hline
+\end{tabular}
+\end{table}
+\vspacesmall
+
+Vec32h cannot be converted directly to and from single precision because there is no Vec32f. Conversion to and from Vec32h can be coded as follows:
+\vspacesmall
+
+\begin{lstlisting}[frame=single]
+#include "vectorfp16.h"
+Vec16f a, b;                // single precision vectors
+Vec32h h;                   // half precision vector
+// conversion from single to half precision:
+h = Vec32h(to_float16(a), to_float16(b));
+// conversion from half to single precision:
+a = to_float(h.get_low());  // lower half
+b = to_float(h.get_high()); // upper half
+\end{lstlisting}
 \vspacebig
 
 
@@ -624,8 +750,9 @@ int s = a.size();  // s = 8
 9: uint32\_t \newline
 10: int64\_t \newline
 11: uint64\_t \newline
-16: float \newline
-17: double \\ \hline
+15: half precision floating point \newline
+16: float (single precision floating point) \newline
+17: double (double precision floating point) \\ \hline
 \bfseries Efficiency & good \\ \hline
 \end{tabular}
 
@@ -641,7 +768,15 @@ int t = a.elementtype();  // t = 6
 
 
 \section{Arrays and vectors} \label{ArraysOfVectors}
-Vectors are very useful for array loops with large data sets. Data arrays may have fixed size or variable size. A fixed size array is particularly efficient if the size is known when the program is compiled, or a reasonable upper limit can be set. For example:
+Vectors are very useful for array loops with large data sets. 
+The add-on package named 'containers' provides efficient container class templates for implementing arrays with fixed size and dynamic size, as well as matrixes. 
+See containers\_manual.pdf for details.
+\vspacesmall
+
+If you are not using the add-on package 'containers' or you are making your own containers then you need to consider the following.
+\vspacesmall
+
+Data arrays may have fixed size or variable size. A fixed size array is particularly efficient if the size is known when the program is compiled, or a reasonable upper limit can be set. For example:
 
 \begin{lstlisting}[frame=none]
 int const datasize = 1024;  // size of dataset, constant
@@ -682,9 +817,8 @@ See page \pageref{NotAMultipleOfVectorSize} for discussion of the case where the
 A matrix or multidimensional array can be implemented in various ways. If the length of each row is not more than the vector size, then it is convenient to use one VCL vector for each row. Longer rows can be contained in multiple VCL vectors. If the number of columns is variable then it is recommended to store the rows one after another in a linear array. Use padding space at the end of each row, if necessary, to align the next row by the vector length. 
 \vspacesmall
 
-Do not use the standard C++ container classes. It is unfortunately common to use nested container classes such as \codei{std::vector<std::vector<data\_type>>}. Such constructs are inefficient and should be avoided.
-\vspacesmall
-
+The standard C++ container classes are often inefficient. It is unfortunately common to implement matrixes as nested container classes such as \codei{std::vector$<$std::vector$<$data\_type$>>$}. Such constructs are inefficient and should be avoided.
+\vspacebig
 
 
 \section{Using a namespace} \label{UsingANamespace}

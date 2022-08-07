@@ -36,7 +36,7 @@ Vec4i c = permute4<-1,-1,1,1>(a); // c = ( 0,  0, 11, 11)
 The indexes in angle brackets must be compile-time constants, they cannot contain variables or function calls. If you need variable indexes then use the lookup functions instead (see page \pageref{LookupFunctions}).
 \vspacesmall
 
-The permute functions contain a lot of metaprogramming code which is used for finding the best instructions for the given set of indexes and the specified instruction set. The metaprogramming may produce extra code when compiling in debug mode, but this extra code is eliminated when compiling for release mode with optimization on. The call to a permute function is reduced to just one or a few machine instructions in favorable cases. 
+The permute functions are using advanced metaprogramming techniques in order to find the optimal combination of instructions that fit the given set of indexes and the specified instruction set. The optimization criteria include number of instructions, instruction latency, and data cache use. The metaprogramming may produce extra code when compiling in debug mode, but this extra code is eliminated when compiling for release mode with optimization on. The call to a permute function is reduced to just one or a few machine instructions in favorable cases. 
 \vspacesmall
 
 The performance is generally good when the instruction set SSSE3 or higher is enabled. The performance for permuting vectors of 16-bit integers is medium, and the performance for permuting vectors of 8-bit integers is poor for instruction sets lower than SSSE3. You may get the best performance with instruction set AVX2 or AVX512VL.
@@ -56,14 +56,18 @@ The performance is generally good when the instruction set SSSE3 or higher is en
 \vspacesmall
 
 The blend functions are similar to the permute functions, but with two input vectors. 
-The name of the permute function is "blend" followed by the number of vector elements, for example blend4 for Vec4i. The blend function for a vector of $n$ elements has $n$ indexes, which are entered as template parameters in angle brackets. Each index indicates the desired contents of the corresponding element in the result vector. The indexes must be compile-time constants.
-An index $i$ in the interval $0 \leq i \leq n-1$ indicates that element number $i$ from the first input vector should be placed in the corresponding position in the result vector. An index $i$ in the interval $n \leq i \leq 2 \cdot n-1$ indicates that element number $i-n$ from the second input vector should be placed in the corresponding position in the result vector. An index $i$ = -1 gives a zero in the corresponding position. An index $i$ = V\_DC means don't care.
+The name of the function is "blend" followed by the number of vector elements, for example blend4 for Vec4i. The blend function for a vector of $n$ elements has $n$ indexes, which are entered as template parameters in angle brackets. Each index indicates the desired contents of the corresponding element in the result vector. The indexes must be compile-time constants.
+An index $i$ in the interval $0 \leq i \leq n-1$ indicates that element number $i$ from the first input vector should be placed in the corresponding position in the result vector. An index $i$ in the interval $n \leq i \leq 2 \cdot n-1$ indicates that element number $i-n$ from the second input vector should be placed in the corresponding position in the result vector. An index $i = -1$ gives a zero in the corresponding position. An index $i$ = V\_DC means don't care.
+\vspacesmall
+
+The blend functions are using metaprogramming in the same way as the permute functions. The performance is similar to the permute functions, or slightly lower.
+\vspacesmall
 
 \begin{lstlisting}[frame=none]
 // Example:
 Vec4i a(10, 11, 12, 13);
 Vec4i b(20, 21, 22, 23);
-Vec4i c = blend4<4,0,4,3>(a, b); // c = (20, 10, 20, 13)
+Vec4i c = blend4<4,0,6,3>(a, b); // c = (20, 10, 22, 13)
 \end{lstlisting}
 \vspacesmall
 
@@ -167,7 +171,11 @@ Vec64c, Vec32s: Good for AVX512VBMI, medium for AVX512BW, poor otherwise.
 
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
-\bfseries Function & Vec4f lookup4(Vec4i, Vec4f) \newline
+\bfseries Function & 
+Vec8h lookup8(Vec8s, Vec8h) \newline
+Vec16h lookup16(Vec16s, Vec16h) \newline
+Vec32h lookup32(Vec32s, Vec32h) \newline
+Vec4f lookup4(Vec4i, Vec4f) \newline
 Vec8f lookup8(Vec8i, Vec8f) \newline
 Vec16f lookup16(Vec16i, Vec16f) \newline
 Vec2d lookup2(Vec2q, Vec2d) \newline
@@ -182,7 +190,9 @@ Vec8d lookup8(Vec8q, Vec8d) \\ \hline
 
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
-\bfseries Function & Vec4f lookup8(Vec4i, Vec4f, Vec4f) \newline
+\bfseries Function & 
+Vec8h lookup16(Vec8s, Vec8h, Vec8h) \newline
+Vec4f lookup8(Vec4i, Vec4f, Vec4f) \newline
 Vec2d lookup4(Vec2q, Vec2d, Vec2d) \\ \hline
 \bfseries Defined for & Vec4f, Vec2d \\ \hline
 \bfseries Description & Blend of floating point vectors with integer indexes. Each index must be in the range  $0 \leq i \leq 2*n-1$ where n is the number of elements in a vector. \\ \hline
@@ -193,7 +203,8 @@ Vec2d lookup4(Vec2q, Vec2d, Vec2d) \\ \hline
 
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
-\bfseries Function & Vec16c lookup\textless n\textgreater(Vec16c index, void const * table) \newline
+\bfseries Function &
+Vec16c lookup\textless n\textgreater(Vec16c index, void const * table) \newline
 Vec32c lookup\textless n\textgreater(Vec32c index, void const * table) \newline
 Vec8s lookup\textless n\textgreater(Vec8s index, void const * table) \newline
 Vec16s lookup\textless n\textgreater(Vec16s index, void const * table) \newline
@@ -202,6 +213,9 @@ Vec8i lookup\textless n\textgreater(Vec8i index, void const * table) \newline
 Vec16i lookup\textless n\textgreater(Vec16i index, void const * table) \newline
 Vec4q lookup\textless n\textgreater(Vec4q index, void const * table) \newline
 Vec8q lookup\textless n\textgreater(Vec8q index, void const * table) \newline
+Vec8h lookup\textless n\textgreater(Vec8s index, void const * table) \newline
+Vec16h lookup\textless n\textgreater(Vec16s index, void const * table) \newline
+Vec32h lookup\textless n\textgreater(Vec32s index, void const * table) \newline
 Vec4f lookup\textless n\textgreater(Vec4i index, float const * table) \newline
 Vec8f lookup\textless n\textgreater(Vec8i const \& index, float const * table) \newline
 Vec16f lookup\textless n\textgreater(Vec16i const \& index, float const * table) \newline

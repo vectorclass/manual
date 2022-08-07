@@ -16,14 +16,14 @@ Assembly programming is the ultimate way of optimizing code. Almost anything is 
 \vspacesmall
 
 \textbf{Intrinsic functions}\\
-Several compilers support intrinsic functions that are direct representations of machine instructions. A big advantage of using intrinsic functions rather than assembly code is that the compiler takes care of register allocation, function calling conventions, and other details that are difficult to keep track of when writing assembly code. Another advantage is that the compiler can optimize the code further by such methods as scheduling, interprocedural optimization, function inlining, constant propagation, common subexpression elimination, loop invariant code motion, induction variables, etc. Many of these optimization method are rarely used in assembly code because they make the code unwieldy and unmanageable. Consequently, the combination on intrinsic functions and a good optimizing compiler can often produce more efficient code than what a decent assembly programmer would do.
+Several compilers support intrinsic functions that are direct representations of machine instructions. A big advantage of using intrinsic functions rather than assembly code is that the compiler takes care of register allocation, function calling conventions, and other details that are difficult to keep track of when writing assembly code. Another advantage is that the compiler can optimize the code further by such methods as scheduling, interprocedural optimization, function inlining, constant propagation, common subexpression elimination, loop invariant code motion, induction variables, etc. Many of these optimization methods are rarely used in assembly code because they make the code unwieldy and unmanageable. Consequently, the combination on intrinsic functions and a good optimizing compiler can often produce more efficient code than what a decent assembly programmer would do.
 \vspacesmall
 
 A disadvantage of intrinsic functions is that these functions have long names that are difficult to remember and they make the code look awkward.
 \vspacesmall
 
 \textbf{Intel vector classes}\\
-Intel has published a number of vector classes in the form of three C++ header files named fvec.h, dvec.h and ivec.h. These are simpler to use than the intrinsic functions, but unfortunately the Intel vector class files are poorly maintained; they provide only the most basic functionality; and Intel has done very little to promote, support or develop them. The Intel vector classes have no way of converting data between arrays and vectors. This leaves us with no way of putting data into a vector other than specifying each element separately - which pretty much destroys the advantage of using vectors. The Intel vector classes work only with Intel and MS compilers.
+Intel has published a number of vector classes in the form of three C++ header files named fvec.h, dvec.h and ivec.h. These are simpler to use than the intrinsic functions, but unfortunately the Intel vector class files are poorly maintained; they provide only the most basic functionality; and Intel has done very little to promote, support, or develop them. The Intel vector classes have no way of converting data between arrays and vectors. This leaves us with no way of putting data into a vector other than specifying each element separately - which pretty much destroys the advantage of using vectors. The Intel vector classes work only with Intel and MS compilers.
 \vspacesmall
 
 \textbf{The VCL vector class library}\\
@@ -49,7 +49,7 @@ Automatic vectorization is the easiest way of generating SIMD code, and I would 
 \end{itemize}
 \vspacesmall
 
-The present vector class library is intended as a good alternative when automatic vectorization fails to produce optimal code for any of these reasons.
+The vector class library is intended as a good alternative when automatic vectorization fails to produce optimal code for any of these reasons.
 \vspacesmall
 
 
@@ -58,8 +58,30 @@ The present vector class library is intended as a good alternative when automati
 It is recommended to compile for 64-bit mode because this gives access to more memory and more registers. The CPU gives you access to only 8 vector registers in 32-bit mode, but 32 vector registers in 64-bit mode if the AVX512 instruction set is enabled. Compiler options are listed in table \ref{table:CommandLineOptions}.
 \vspacesmall
 
-The vector class library has support for the following four compilers:
+The vector class library has support for the following compilers:
+\vspacebig
+
+\textbf{Gnu C++ compiler}\\
+This compiler has produced very good optimizations in my tests. The Gnu compiler (g++) is available for all x86 and x86-64 platforms. 
 \vspacesmall
+
+There are several versions of the Gnu compiler for the Windows platform. The version that comes with msys2 is recommended. The Cygwin64 version is not recommended because it is using a less efficient memory model.
+\vspacesmall
+
+Do not use the option -ffast-math or -ffinite-math-only on a Gnu compiler if you want to rely on INF and NAN because these options may disable the detection of INF and NAN.
+\vspacebig
+
+\textbf{Clang C++ compiler}\\
+This compiler has produced the best optimized code in my tests. The Clang compiler is available for all x86 and x86-64 platforms. 
+\vspacesmall
+
+There are different versions of Clang available for the Windows platform. 
+The msys2 version, and the version that comes as a plugin for Visual Studio are both recommended.
+The Cygwin64 version is not recommended because it is using a less efficient memory model.
+\vspacesmall
+
+Do not use the option -ffast-math or -ffinite-math-only on a Clang compiler if you want to rely on INF and NAN because these options may disable the detection of INF and NAN.
+\vspacebig
 
 \textbf{Microsoft Visual Studio}\\
 This is a very popular compiler for Windows because it has a good and user friendly IDE (Integrated Development Environment) and debugger. Make sure you are compiling for the "unmanaged" version, i. e. \emph{not} using the .net common language runtime (CLR).
@@ -70,48 +92,30 @@ The Microsoft compiler optimizes reasonably well, but not as good as the other c
 
 Do not use the option /fp:fast on a Microsoft compiler because
 this may disable the detection of INF and NAN.
-\vspacesmall
-
+\vspacebig
 
 \textbf{Intel C++ compiler}\\
-The current version of Intel C++ compiler (version 19.0) cannot compile version 2.xx of VCL due to problems with \codei{constexpr} functions. Use version 1.xx of VCL instead if you need to use the Intel compiler.\\
-The Intel compiler optimizes better than the Microsoft compiler. Intel also provides some of the best optimized function libraries for mathematical and other purposes. Unfortunately, the Intel compilers and some of the function libraries favor Intel CPUs, and produce code that runs slower than necessary on CPUs of any other brand than Intel. It is possible to work around this limitation for the Intel function libraries and in some cases also for compiled functions. 
-See Agner Fog's \href{https://www.agner.org/optimize/blog/read.php?i=49}{blog} 
-and \href{https://www.agner.org/optimize/#manual_cpp}{C++ manual} 
-for details. Intel's compilers are available for Windows, Linux and Mac platforms.
+Version 2021 or later of an Intel C++ compiler is required for compiling VCL version 2.xx.
 \vspacesmall
 
-\textbf{Gnu C++ compiler}\\
-This compiler produced very good optimizations in my tests. The Gnu compiler (g++) is available for all x86 and x86-64 platforms. 
+The Intel C++ compiler currently comes in two versions: "Intel C++ Compiler Classic" (icc for Linux and icl for Windows) and "Intel oneAPI LLVM-based C++ Compiler" (icx). The classic version is a continuation of previous versions and is not recommended for new projects. The LLVM-based version is based on a Clang compiler with additional "Intel proprietary optimizations and code generation".
 \vspacesmall
 
-There are several versions of the Gnu compiler for the Windows platform. The version that comes with msys2 is recommended. The Cygwin64 version is not recommended if performance is critical because it is using a less efficient memory model.
+Note that the Intel compiler "Classic" and some of the function libraries favour Intel CPUs and produce code that runs slower than necessary on CPUs of any other brand than Intel. Do not use the Intel compiler "Classic" for software that may run on non-Intel microprocessors. Code produced by the Intel LLVM-based Compiler will usually give good performance on non-Intel processors. Avoid command line options beginning with -x or /Qx. Code compiled with these options can only run on Intel processors. See table \ref{table:CommandLineOptions} for an overview of command line options.
 \vspacesmall
 
-Do not use the option -ffast-math or -ffinite-math-only on a Gnu compiler because
-this may disable the detection of INF and NAN.
-\vspacesmall
+You may use the Intel LLVM-based Compiler if you need Intel-specific features. Otherwise, you may as well prefer the pure Clang compiler which is almost identical.
+\vspacebig
 
-
-\textbf{Clang C++ compiler}\\
-This compiler produced the best optimized code in my tests. The Clang compiler is available for all x86 and x86-64 platforms. 
-\vspacesmall
-
-There are different versions of Clang available for the Windows platform. 
-The msys2 version, and the version that comes as a plugin for Visual Studio (version 16.3 or later), are both recommended.
-The Cygwin64 version is not recommended if performance is critical because it is using a less efficient memory model.
-\vspacesmall
-
-Do not use the option -ffast-math or -ffinite-math-only on a Clang compiler because this may disable the detection of INF and NAN.
-\vspacesmall
-
-My recommendation is to use the Clang or Gnu compiler for the release version of a program when performance is important. The Microsoft compiler may be a convenient aid in the development phase. The Intel compiler should not be used if the code may run on an AMD processor.
-\vspacesmall
+\textbf{Conclusion}\\
+My recommendation is to use the Clang or Gnu compiler for the release version of a program when performance is important. Microsoft Visual Studio may be a convenient aid in the development phase of a Windows project. Switching to Clang is easy because there is a Clang/LLVM plugin to Visual Studio. 
+\vspacebig
 
 
 \section{Choosing the optimal vector size and precision} \label{ChoosingOptimalVectorSize}
 
-It takes the same time to make a vector addition with vectors of eight single precision floats (\codei{Vec8f}) as with vectors of four double precision floats (\codei{Vec4d}). Likewise, it takes the same time to add two integer vectors whether the vectors have eight 32-bit integers (\codei{Vec8i}) or sixteen 16-bit integers (\codei{Vec16s}). Therefore, it is advantageous to use the lowest precision or resolution that fits the data. It may even be worthwhile to modify a floating point algorithm to reduce loss of precision if this allows you to use single precision rather than double precision. However, you should also take into account the time it takes to convert data from one precision to another. Therefore, it is not good to mix different precisions.
+It takes the same time to make a vector addition with vectors of eight single precision floats (\codei{Vec8f}) as with vectors of four double precision floats (\codei{Vec4d}). Likewise, it takes the same time to add two integer vectors whether the vectors have eight 32-bit integers (\codei{Vec8i}) or sixteen 16-bit integers (\codei{Vec16s}). Therefore, it is advantageous to use the lowest precision or resolution that fits the data. It may even be worthwhile to modify a floating point algorithm to reduce loss of precision if this allows you to use single precision rather than double precision. Half precision can improve the performance even further, if supported. 
+However, you should also take into account the time it takes to convert data from one precision to another. Therefore, it is not good to mix different precisions.
 \vspacesmall
 
 The total vector size is 128 bits, 256 or 512 bits, depending on the instruction set. 
@@ -263,7 +267,7 @@ Example \ref{exampleArrayLoopInsert} avoids any memory intermediate by inserting
 
 \section{Alignment of arrays and vectors}\label{Alignment}
 
-Reading and writing vectors to memory is likely to be faster if the array in memory is aligned to an address divisible by the vector size. The vector size is 16, 32, or 64 bytes for 128, 256, and 512 bits, respectively. The program may not work when compiled for an instruction set less than AVX if vectors are not aligned by at least 16.
+Reading and writing vectors from or to memory is likely to be slightly faster if the array in memory is aligned to an address divisible by the vector size. The vector size is 16, 32, or 64 bytes for 128, 256, and 512 bits, respectively. The program may not work when compiled for an instruction set less than AVX if vectors are not aligned by at least 16.
 \vspacesmall
 
 Most compilers will align large arrays automatically if they are stored in static memory, but perhaps not if they are stored in local memory or allocated with operator \codei{new}, etc.
@@ -281,11 +285,9 @@ Older compilers use \codei{\_\_declspec(align(64))} in Windows, or
 \vspacesmall
 
 
-It is always recommended to align large arrays for performance reasons if the code uses vectors. Unfortunately, it may be more complicated to align arrays that are allocated dynamically with operator \codei{new} or with container classes. 
-Older versions of the C++ standard do not specify how to make aligned memory allocation. C++ version 17 supports alignment with \codei{std::aligned\_alloc}. Unfortunately, this does not yet work with all compilers.
-\vspacesmall
+It is always recommended to align large arrays for performance reasons if the code uses vectors. C++ version 17 supports alignment with \codei{std::aligned\_alloc}. \vspacesmall
 
-A method that seems to work with current compilers is to align an array of vectors with operator \codei{new}. The compiler recognizes that a vector class, e.g. \codei{Vec8f}, needs alignment. An array of such vectors will be aligned correctly, even when allocated with \codei{new}. This is illustrated in the following example:
+A useful method is to align an array of vectors with operator \codei{new}. The compiler recognizes that a vector class, e.g. \codei{Vec8f}, needs alignment. An array of such vectors will be aligned correctly, even when allocated with \codei{new}. This is illustrated in the following example:
 
 \begin{lstlisting}[frame=none]
 // size of dataset, as number of floats:
@@ -315,8 +317,10 @@ delete[] mydata;
 \end{lstlisting}
 \vspacesmall
 
+The container class template \codei{ContainerV} is available as an add-on to the vector class library. This is useful for making a properly aligned array of vectors.
+\vspacesmall
 
-If the compiler does not offer any useful method for aligning dynamically allocated memory then you may do the alignment manually:
+Finally, it is possible to do the alignment manually as illustrated in this example:
 
 \begin{lstlisting}[frame=none]
 // Example of aligning memory
@@ -495,7 +499,7 @@ for (i = 0; i < arraysize; i += vectorsize) {
 }
 int sum = horizontal_add(sum1); // vector sum
 \end{lstlisting}
-
+\vspacesmall
 
 It is clearly advantageous to increase the array size to a multiple of the vector size, as in example \ref{exampleOddLoop5} above. Likewise, if you are storing vector data to an array, then it is an advantage to make the result array bigger to hold the excess data. If this is not possible then use \codei{store\_partial} to write the last partial vector to the array.
 \vspacesmall
@@ -510,6 +514,11 @@ It is usually possible to read past the end of an array, as in example \ref{exam
 \vspacesmall
 
 These problems can be avoided either by making the array bigger or by aligning the array to an address divisible by the vector size, as described on page \pageref{Alignment}. The memory page size is at least 4 kbytes, and always a power of 2. If the array is aligned by the vector size then the page boundaries are certain to coincide with vector boundaries. This makes sure that there is no memory page boundary between the end of the array and the next vector-size boundary. Therefore, we can read up to the next vector-size boundary without the risk of crossing a boundary to an invalid memory page.
+\vspacesmall
+
+The add-on package named 'containers' includes efficient container class templates for arrays of fixed size and dynamic size, as well as matrixes. 
+These containers will automatically extend arrays to a multiple of the vector size. 
+Use the container class template \codei{ContainerV} for making arrays that fit the vector classes. See containers\_manual.pdf for details.
 \vspacesmall
 
 
@@ -624,13 +633,16 @@ XOP \newline AMD only & 2011 & compare, horizontal\_add\_x, rotate\_left, blend,
 FMA4 \newline AMD only & 2011 & floating point code containing multiplication followed by addition. Obsolete. \\ \hline
 FMA3 & 2012 & floating point code containing multiplication followed by addition \\ \hline
 AVX2 & 2013 & All operations on 256-bit integer vectors: Vec32c, Vec32uc, Vec16s, Vec16us, Vec8i, Vec8ui, Vec4q, Vec4uq. Gather. \\ \hline
+F16C & 2013 & Conversion between single precision and half precision floating point numbers. \\ \hline
 AVX512F & 2016 & All operations on 512-bit integer and floating point vectors: Vec16i, Vec16ui, Vec8q, Vec8uq, Vec16f, Vec8d. \\ \hline
 AVX512BW & 2018 & 512 bit vectors with 8-bit and 16-bit integer elements \\ \hline
 AVX512DQ & 2018 & Faster multiplication of vectors of 64-bit integers. \\ \hline
-AVX512VL & 2018 & compact boolean vectors for 128 and 256 bit data \\ \hline
-AVX512ER & 2016 & Only on a few processor models. Fast exponential functions. Better precision on approx\_recipr and approx\_rsqrt. \\ \hline
-AVX512VBMI & future & Faster permutation functions etc. for Vec32c and Vec64c \\ \hline
-AVX512VBMI2 & future & Faster extract from 8-bit and 16-bit integer vectors \\ \hline
+AVX512VL & 2018 & Compact boolean vectors for 128 and 256 bit data. 
+Improved performance of insert, extract, load\_partial, store\_partial, and several other functions. \\ \hline
+AVX512ER & 2016 & Only on a few processor models have this. Fast exponential functions. Better precision on approx\_recipr and approx\_rsqrt. \\ \hline
+AVX512VBMI & 2018 & Faster permutation functions etc. for Vec32c and Vec64c \\ \hline
+AVX512VBMI2 & 2019 & Faster extract from 8-bit and 16-bit integer vectors \\ \hline
+AVX512-FP16 & future & Half precision floating point calculations. \\ \hline
 \end{tabular}
 \end{table}
 \vspacesmall
@@ -642,7 +654,7 @@ The vector class library makes it possible to compile for different instruction 
 \label{table:CommandLineOptions}
 \begin{tabular}{|p{26mm}|p{28mm}|p{28mm}|p{28mm}|p{28mm}|}
 \hline
-\bfseries Instruction set & \bfseries Gnu and Clang compiler & \bfseries Intel compiler Linux & \bfseries Intel compiler Windows & \bfseries MS compiler v. 16\\ \hline
+\bfseries Instruction set & \bfseries Gnu and Clang compiler & \bfseries Intel compiler Linux & \bfseries Intel compiler Windows & \bfseries MS compiler \\ \hline
 
 SSE2 & -msse2 & -msse2 & /arch:sse2 & /arch:sse2 \\ \hline
 SSE3 & -msse3 & -msse3 & /arch:sse3 & /arch:sse2 \newline /D\_\_SSE3\_\_ \\ \hline
@@ -650,19 +662,18 @@ SSSE3 & -mssse3 & -mssse3 & /arch:ssse3 & /arch:sse2 \newline /D\_\_SSSE3\_\_ \\
 SSE4.1 & -msse4.1 & -msse4.1 & /arch:sse4.1 & /arch:sse2 \newline /D\_\_SSE4\_1\_\_ \\ \hline
 SSE4.2 & -msse4.2 & -msse4.2 & /arch:sse4.2 & /arch:sse2 \newline /D\_\_SSE4\_2\_\_ \\ \hline
 AVX & -mavx \newline -fabi-version=0 & -mavx & /arch:avx & /arch:avx /DINSTRSET=7 \\ \hline
-FMA3 & -mfma & -mfma & /Qfma & /DINSTRSET=7 \\ \hline
+FMA3 & -mfma & -mfma & -mfma & /DINSTRSET=7 \\ \hline
 AVX2 & -mavx2 \newline -fabi-version=0 & -mavx2 & /arch:avx2 & /arch:avx2 \newline /DINSTRSET=8 \\ \hline
-AVX512F & -mavx512f & -xCOMMON-AVX512 & /arch:COMMON-AVX512 & not supported without AVX512DQ\\ \hline
-
+F16C & -mf16c & -mf16c & /arch:avx2 & /D\_\_F16C\_\_ \\ \hline
+AVX512F & -mavx512f & -mavx512f & /arch:COMMON-AVX512 & not supported without AVX512DQ\\ \hline
 AVX512VL/BW/ DQ & -mavx512vl -mavx512bw -mavx512dq & -mavx512vl -mavx512bw -mavx512dq & /arch:CORE-AVX512 & /arch:avx2 /DINSTRSET=10 \\ \hline
 AVX512VBMI & -mavx512vbmi & -mavx512vbmi & ?? & /D \_\_AVX512VBMI\_\_ \\ \hline
 AVX512VBMI2 & -mavx512vbmi2 & -mavx512vbmi2 & ?? & /D \_\_AVX512VBMI2\_\_ \\ \hline
 AVX512ER & -mavx512er & -xMIC-AVX512 & /arch:MIC-AVX512 & /D\_\_AVX512ER\_\_ \\ \hline
-
+AVX512-FP16 & -mavx512fp16 & -mavx512fp16 & /arch:SAPPHIRERAPIDS & /D\_\_AVX512FP16\_\_ \\ \hline
 \end{tabular}
 \end{table}
 \vspacesmall
-
 
 The Microsoft compiler does not have command line options for all the instruction sets, but other instruction sets can be specified as defines which are detected in the preprocessing directives of the vector class library.
 \vspacesmall
@@ -679,7 +690,7 @@ Suitable options on Microsoft and Intel compilers are /O2 /fp:except-.
 There is no advantage in using the biggest vector classes unless the corresponding instruction set is specified, but it can be convenient to use these classes anyway if the same source code is compiled for multiple versions with different instruction sets. Each large vector will simply be split up into two or four smaller vectors when compiling for a lower instruction set.
 \vspacesmall
 
-It is recommended to make an automatic CPU dispatcher that detects at run time which instruction sets are supported by the actual CPU, and selects the best version of the code accordingly. For example, you may compile the code three times for three different instruction sets: SSE2, AVX2 and AVX512VL/BW/DQ. The CPU dispatcher will then set a function pointer to point to the appropriate version of the compiled code. You can use the function instrset\_detect (see below, page \pageref{instrsetDetect}) to detect the supported instruction set.
+It is recommended to make an automatic CPU dispatcher that detects at runtime which instruction sets are supported by the actual CPU, and selects the best version of the code accordingly. For example, you may compile the code three times for three different instruction sets: SSE2, AVX2 and AVX512VL/BW/DQ. The CPU dispatcher will then set a function pointer to point to the appropriate version of the compiled code. You can use the function instrset\_detect (see below, page \pageref{instrsetDetect}) to detect the supported instruction set.
 Two examples are provided to show how to do the CPU dispatching:
 \vspacesmall
 
@@ -692,7 +703,10 @@ dispatch\_example2.cpp: This example is using different namespaces for the diffe
 There is an important restriction when you are combining code compiled for different instruction sets: Do not transfer any data as vector objects between different pieces of code that are compiled for different instruction sets because the vectors may be represented differently under the different instruction sets. It is recommended to transfer the data as arrays instead between different parts of the program that are compiled for different instruction sets.
 \vspacesmall
 
-The functions listed below can be used for detecting at run time which instruction set is supported, and other useful information about the CPU.
+The functions listed below can be used for detecting at runtime which instruction set is supported, and other useful information about the CPU.
+\vspacesmall
+
+The function \codei{instrset\_detect()} gives a value representing the instruction set level.
 \vspacesmall
 
 \label{instrsetDetect}
@@ -709,7 +723,7 @@ returns one of these values: \newline
 4   or above = Supplementary SSE3 (SSSE3) \newline
 5   or above = SSE4.1 \newline
 6   or above = SSE4.2 \newline
-7   or above = AVX supported by CPU and O.S. \newline
+7   or above = AVX \newline
 8   or above = AVX2 \newline
 9   or above = AVX512F \newline
 10  or above = AVX512VL, AVX512BW, and AVX512DQ \\ \hline
@@ -717,6 +731,8 @@ returns one of these values: \newline
 \end{tabular}
 \vspacebig
 
+Additional instruction set extensions are not necessarily part of a linear sequence. These extensions can be detected with the following functions.
+\vspacebig
 
 \begin{tabular}{|p{25mm}|p{100mm}|}
 \hline
@@ -750,6 +766,24 @@ returns one of these values: \newline
 \bfseries Function & bool hasAVX512VBMI2() \\ \hline
 \bfseries Source & instrset\_detect.cpp \\ \hline
 \bfseries Description & returns true if AVX512VBMI2 is supported \\ \hline
+ \bfseries Efficiency & poor \\ \hline
+\end{tabular}
+\vspacebig
+
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & bool hasF16C() \\ \hline
+\bfseries Source & instrset\_detect.cpp \\ \hline
+\bfseries Description & returns true if F16C is supported \\ \hline
+ \bfseries Efficiency & poor \\ \hline
+\end{tabular}
+\vspacebig
+
+\begin{tabular}{|p{25mm}|p{100mm}|}
+\hline
+\bfseries Function & bool hasAVX512FP16() \\ \hline
+\bfseries Source & instrset\_detect.cpp \\ \hline
+\bfseries Description & returns true if AVX512-FP16 is supported \\ \hline
  \bfseries Efficiency & poor \\ \hline
 \end{tabular}
 \vspacebig

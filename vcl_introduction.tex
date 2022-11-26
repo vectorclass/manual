@@ -63,7 +63,7 @@ The code in example \ref{exampleArrayLoopVect} can be reduced to just 4 machine 
 \item Standard mathematical functions
 \item Permute, blend, gather, scatter, and table look-up functions
 \item Fast integer division
-\item Can build code for different instruction sets from the same source code
+\item Can build code for different instruction set extensions from the same source code
 \item CPU dispatching to utilize higher instruction sets when available
 \item Uses metaprogramming to find the optimal implementation for the selected instruction set and parameter values of a given operator or function
 \item Includes extra add-on packages for special purposes and applications
@@ -75,12 +75,15 @@ Since 1997, every new CPU model has extended the x86 instruction set with more S
 \vspacesmall
 
 \section{Platforms supported} \label{PlatformsSupported}
-Windows, Linux, and Mac, 32-bit and 64-bit, with Intel, AMD, or VIA x86 or x86-64 instruction set processor. There are no plans to support ARM or other instruction sets.
+VCL has support for Windows, Linux, and Mac, 32-bit and 64-bit, with Intel, AMD, or VIA x86 or x86-64 instruction set processors. 
+\vspacesmall
+
+There are no plans to support ARM or other instruction sets in VCL. If you need other platforms than x86 and x86-64 then you may use the cross-platform function wrapper library named Highway. You can find it at \url{https://github.com/google/highway}.
 \vspacesmall
 
 A special version of the vector class library for the (now obsolete) Intel Knights Corner coprocessor has been developed at CERN. It is available from
-https://bitbucket.org/veclibknc/vclknc.git or 
-https://bitbucket.org/edanor/umesimd/
+\url{https://bitbucket.org/veclibknc/vclknc.git} or 
+\url{https://bitbucket.org/edanor/umesimd/}
 \vspacesmall
 
 \section{Compilers supported} \label{CompilersSupported}

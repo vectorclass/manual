@@ -90,7 +90,7 @@ A special version of the vector class library for the (now obsolete) Intel Knigh
 The vector class library could not have been made with any other programming language than C++, because only C++ combines all the necessary features: low-level programming such as bit manipulation and intrinsic functions, high-level programming features such as classes and templates, operator overloading, metaprogramming, compiling to machine code without any intermediate byte code, and highly optimizing compilers with support for the many different instruction sets and platforms.
 \vspacesmall
 
-The vector class library works with Gnu, Clang, Microsoft, and Intel C++ compilers. It is recommended to use the newest version of the compiler if the newest instruction sets are used. The best optimization is obtained with the Gnu and Clang compilers.
+The vector class library works with Gnu, Clang, Microsoft, and Intel C++ compilers. It is recommended to use the newest version of the compiler if the newest instruction sets are used. The best optimization is obtained with the Gnu and Clang compilers.  You may use any integrated development environment, make utility, or build system.
 \vspacesmall
 
 The vector class library version 2.xx requires the C++17 or later standard for the C++ language. The vector class library version 1.xx, using standard C++0x, should only be used if it is not possible to use a compiler with C++17 support.
@@ -167,7 +167,14 @@ Include the header file vectorclass.h in your C++ source file.
 Several other header files will be included automatically.
 \vspacesmall
 
-Set your compiler options to the desired instruction set. The instruction set must be at least SSE2. See table \ref{table:CommandLineOptions} on page \pageref{table:CommandLineOptions} for a list of compiler options. It is recommended to compile for 64-bit mode.
+Set your compiler options to the desired instruction set. It is recommended to compile for 64-bit mode. Use C++ version 17 or higher. 
+The instruction set must be at least SSE2. See table \ref{table:CommandLineOptions} on page \pageref{table:CommandLineOptions} for a list of compiler options. 
+\vspacesmall
+
+A command line for the Clang compiler may, for example, look like this:\\
+clang++ -m64 -O2 -std=c++17 -mfma -mavx2 -fabi-version=0 myprogram.cpp
+\vspacesmall
+
 You may compile multiple versions for different instruction sets as explained in chapter \ref{CPUDispatching}.
 \vspacesmall
 

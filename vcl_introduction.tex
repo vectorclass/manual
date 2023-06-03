@@ -317,7 +317,7 @@ The size of the boolean vectors depends on the instruction set (see page \pagere
 Half precision floating point numbers are represented by 16 bits (one sign bit, five exponent bits, and ten bits for the mantissa). Half precision is useful for sound, video, and artificial intelligence applications where the low precision is acceptable. A 512-bit vector register can contain 32 half-precision numbers and do 32 arithmetic operations simultaneously with a single instruction. 
 \vspacesmall
 
-Microprocessors have various levels of support for half precision. The F16C instruction set extension supports conversion between half precision and single precision, but not arithmetic operations on half precision numbers. F16C has been included in Intel and AMD processors since 2013-2014. The newer AVX512-FP16 instruction set extension implements a full set of arithmetic operations on half precision numbers. The AVX512-FP16 instruction set will be supported by Intel's Sapphire Rapids processor, expected to be introduced in late 2022.
+Microprocessors have various levels of support for half precision. The F16C instruction set extension supports conversion between half precision and single precision, but not arithmetic operations on half precision numbers. F16C has been included in Intel and AMD processors since 2013-2014. The newer AVX512-FP16 instruction set extension implements a full set of arithmetic operations on half precision numbers. The AVX512-FP16 instruction set is first supported by Intel's Sapphire Rapids processor, introduced in 2023.
 \vspacesmall
 
 The Vector Class Library supports half precision floating point vectors when the following header file is included:

@@ -223,9 +223,11 @@ Vec2d lookup\textless n\textgreater(Vec2q index, double const * table) \newline
 Vec4d lookup\textless n\textgreater(Vec4q const \& i, double const * table) \newline
 Vec8d lookup\textless n\textgreater(Vec8q const \& i, double const * table) \\ \hline
 \bfseries Defined for & all floating point and signed integer vector classes \\ \hline
-\bfseries Description & Permute, blend, table lookup or gather data from array with an integer vector of indexes.\newline
-Each index must be in the range  $0 \leq i \leq n-1$, where $n$ is indicated as a template parameter. $n$ must be a positive compile-time constant. \\ \hline
-\bfseries Efficiency & good for AVX2 and later, medium for lower instruction sets \\ \hline
+\bfseries Description & Permute, blend, table lookup, or gather data from array with an integer vector of indexes.\newline
+Each index must be in the range  $0 \leq i \leq n-1$, where $n$ is indicated as a template parameter. $n$ must be a positive compile-time constant. 
+The range check can be omitted by setting n = INT\_MAX. \\ \hline
+\bfseries Efficiency & good for AVX2 and later, medium for lower instruction sets.
+Best if n is no bigger than twice the vector length. \\ \hline
 \end{tabular}
 \vspacebig
 
@@ -305,7 +307,6 @@ Vec8d gather8d\textless indexes\textgreater(void const * table) \\ \hline
 \bfseries Defined for & Vec4i, Vec8i, Vec16i, Vec2q, Vec4q, Vec8q, \newline
 Vec4f, Vec8f, Vec16f, Vec2d, Vec4d, Vec8d \\ \hline
 \bfseries Description & Load non-contiguous data from a table. Indexes cannot be negative. There is no option for zeroing or don't care.  \newline
-If you need variable indexes, then use the lookup functions instead. \newline
 The function may read a full vector and permute it if all indexes are smaller than the vector size.  \\ \hline
 \bfseries Efficiency & medium \\ \hline
 \end{tabular}
@@ -317,6 +318,9 @@ int tab[8] = {10,11,12,13,14,15,16,17};
 Vec4i a = gather4i<6,4,4,0>(tab);
 // a = (16, 14, 14, 10);
 \end{lstlisting}
+\vspacesmall
+
+Use the lookup\textless n\textgreater {} functions instead if you need variable indexes. \newline
 \vspacesmall
 
 

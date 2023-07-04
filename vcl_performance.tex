@@ -55,11 +55,12 @@ The vector class library is intended as a good alternative when automatic vector
 
 \section{Choice of compiler and function libraries}\label{ChoiceOfCompiler}
 
-It is recommended to compile for 64-bit mode because this gives access to more memory and more registers. The CPU gives you access to only 8 vector registers in 32-bit mode, but 32 vector registers in 64-bit mode if the AVX512 instruction set is enabled. Compiler options are listed in table \ref{table:CommandLineOptions}.
+It is recommended to compile for 64-bit mode because this gives access to more memory and more registers. The CPU gives you access to only 8 vector registers in 32-bit mode, but 32 vector registers in 64-bit mode if the AVX512 instruction set is enabled. Compiler options for different instruction sets are listed in table \ref{table:CommandLineOptions}.
 \vspacesmall
 
 The vector class library has support for the following compilers:
 \vspacebig
+
 
 \textbf{Gnu C++ compiler}\\
 This compiler has produced very good optimizations in my tests. The Gnu compiler (g++) is available for all x86 and x86-64 platforms. 
@@ -68,8 +69,11 @@ This compiler has produced very good optimizations in my tests. The Gnu compiler
 There are several versions of the Gnu compiler for the Windows platform. The version that comes with msys2 is recommended. The Cygwin64 version is not recommended because it is using a less efficient memory model.
 \vspacesmall
 
-Do not use the option -ffast-math or -ffinite-math-only on a Gnu compiler if you want to rely on INF and NAN because these options may disable the detection of INF and NAN.
+Options -O2 or -O3 are recommended for storing vectors in registers and for peeling off the trivial overhead of objects, constructors, etc. 
+Options -fno-trapping-math and -fno-math-errno facilitate vectorization by disabling old exception handling methods that are not suitable for vectors. 
+Do not use the option -ffast-math or -ffinite-math-only if you want to rely on INF and NAN because these options may disable the detection of INF and NAN.
 \vspacebig
+
 
 \textbf{Clang C++ compiler}\\
 This compiler has produced the best optimized code in my tests. The Clang compiler is available for all x86 and x86-64 platforms. 
@@ -80,8 +84,9 @@ The msys2 version, and the version that comes as a plugin for Visual Studio are 
 The Cygwin64 version is not recommended because it is using a less efficient memory model.
 \vspacesmall
 
-Do not use the option -ffast-math or -ffinite-math-only on a Clang compiler if you want to rely on INF and NAN because these options may disable the detection of INF and NAN.
+Use the same compiler options as for the Gnu C++ compiler mentioned above.
 \vspacebig
+
 
 \textbf{Microsoft Visual Studio}\\
 This is a very popular compiler for Windows because it has a good and user friendly IDE (Integrated Development Environment) and debugger. Make sure you are compiling for the "unmanaged" version, i. e. \emph{not} using the .net common language runtime (CLR).
@@ -90,9 +95,13 @@ This is a very popular compiler for Windows because it has a good and user frien
 The Microsoft compiler optimizes reasonably well, but not as good as the other compilers. Support for the latest instruction sets is incomplete.
 \vspacesmall
 
+You may use the plugin for the Clang compiler in Visual studio to combine a good compiler with a good IDE.
+\vspacesmall
+
 Do not use the option /fp:fast on a Microsoft compiler because
 this may disable the detection of INF and NAN.
 \vspacebig
+
 
 \textbf{Intel C++ compiler}\\
 Version 2021 or later of an Intel C++ compiler is required for compiling VCL version 2.xx.
@@ -106,6 +115,7 @@ Note that the Intel compiler "Classic" and some of the function libraries favour
 
 You may use the Intel LLVM-based Compiler if you need Intel-specific features. Otherwise, you may as well prefer the pure Clang compiler which is almost identical.
 \vspacebig
+
 
 \textbf{Conclusion}\\
 My recommendation is to use the Clang or Gnu compiler for the release version of a program when performance is important. Microsoft Visual Studio may be a convenient aid in the development phase of a Windows project. Switching to Clang is easy because there is a Clang/LLVM plugin to Visual Studio. 

@@ -364,7 +364,7 @@ The AVX512-FP16 instruction set is supported by the following compilers and late
 g++ version 12.1.0 with binutils 2.38 \\
 clang++ version 14.0.0 \\
 Intel c++ compiler version 2021.2\\
-Microsoft Visual Studio version 17.2
+Microsoft Visual Studio version 17.2 has incomplete support
 \vspacesmall
 
 The proper type for half precision scalars is \codei{\_Float16}. This type is supported by the g++ and some Intel compilers. It is supported on the Clang compiler only when AVX512-FP16 is enabled. The vector class library will emulate a type named \codei{Float16} if \codei{\_Float16} is not supported by the compiler. This emulation includes only the most basic operations and operators on half precision floating point scalars, such as $+-*/$ and conversion to and from \codei{float}. Other operators and functions on Float16 are not emulated. \codei{Float16} is defined as \codei{\_Float16} whenever \codei{\_Float16} is supported by the compiler.

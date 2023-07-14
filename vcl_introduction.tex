@@ -317,7 +317,7 @@ The size of the boolean vectors depends on the instruction set (see page \pagere
 Half precision floating point numbers are represented by 16 bits (one sign bit, five exponent bits, and ten bits for the mantissa). Half precision is useful for sound, video, and artificial intelligence applications where the low precision is acceptable. A 512-bit vector register can contain 32 half-precision numbers and do 32 arithmetic operations simultaneously with a single instruction. 
 \vspacesmall
 
-Microprocessors have various levels of support for half precision. The F16C instruction set extension supports conversion between half precision and single precision, but not arithmetic operations on half precision numbers. F16C has been included in Intel and AMD processors since 2013-2014. The newer AVX512-FP16 instruction set extension implements a full set of arithmetic operations on half precision numbers. The AVX512-FP16 instruction set is first supported by Intel's Sapphire Rapids processor, introduced in 2023.
+Microprocessors have various levels of support for half precision. The F16C instruction set extension supports conversion between half precision and single precision, but not arithmetic operations on half precision numbers. F16C has been included in Intel and AMD processors since 2013-2014. The newer AVX512-FP16 instruction set extension implements a full set of arithmetic operations on half precision numbers.
 \vspacesmall
 
 The Vector Class Library supports half precision floating point vectors when the following header file is included:
@@ -363,7 +363,8 @@ The half precision code can run even on microprocessors without F16C, but this w
 The AVX512-FP16 instruction set is supported by the following compilers and later versions:\\
 g++ version 12.1.0 with binutils 2.38 \\
 clang++ version 14.0.0 \\
-Intel c++ compiler version 2021.2
+Intel c++ compiler version 2021.2\\
+Microsoft Visual Studio version 17.2
 \vspacesmall
 
 The proper type for half precision scalars is \codei{\_Float16}. This type is supported by the g++ and some Intel compilers. It is supported on the Clang compiler only when AVX512-FP16 is enabled. The vector class library will emulate a type named \codei{Float16} if \codei{\_Float16} is not supported by the compiler. This emulation includes only the most basic operations and operators on half precision floating point scalars, such as $+-*/$ and conversion to and from \codei{float}. Other operators and functions on Float16 are not emulated. \codei{Float16} is defined as \codei{\_Float16} whenever \codei{\_Float16} is supported by the compiler.

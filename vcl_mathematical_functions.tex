@@ -641,9 +641,12 @@ Useful to avoid loss of precision if x is close to 0 \\ \hline
 
 
 \section{Trigonometric functions and inverse trigonometric functions}
-All angles are in radians.
-
+The functions sin, cos, sincos, and tan take arguments in radians. The functions sinpi, cospi, sincospi, and tanpi take arguments in multiples of \pi{}. The inverse trigonometric functions return arguments in radians.
 \vspacesmall
+
+The trigonometric functions with arguments in radians have decreasing precision for extreme values of the argument. For example, sin(1000000*pi) gives the result -2.2E-10, while sinpi(1000000) gives the exact result 0. The reasons for the inaccuracy are that the value of \pi{} cannot be represented exactly, and that the reduction modulo \pi{} inside the sin function involves loss of precision for extreme values of the argument. It is recommended to use the sinpi, cospi, sincospi, and tanpi functions when accuracy is important and the algorithm allows using \pi{} as a unit rather than radians.
+\vspacebig
+
 \begin{tabular}{|p{30mm}|p{120mm}|}
 \hline
 \bfseries Function & sin \\ \hline

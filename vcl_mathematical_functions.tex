@@ -644,7 +644,7 @@ Useful to avoid loss of precision if x is close to 0 \\ \hline
 The functions sin, cos, sincos, and tan take arguments in radians. The functions sinpi, cospi, sincospi, and tanpi take arguments in multiples of \pi{}. The inverse trigonometric functions return arguments in radians.
 \vspacesmall
 
-The trigonometric functions with arguments in radians have decreasing precision for extreme values of the argument. For example, sin(1000000*pi) gives the result -2.2E-10, while sinpi(1000000) gives the exact result 0. The reasons for the inaccuracy are that the value of \pi{} cannot be represented exactly, and that the reduction modulo \pi{} inside the sin function involves loss of precision for extreme values of the argument. It is recommended to use the sinpi, cospi, sincospi, and tanpi functions when accuracy is important and the algorithm allows using \pi{} as a unit rather than radians.
+The trigonometric functions with arguments in radians have decreasing precision for extreme values of the argument. For example, sin(1000000*pi) gives the result -2.2E-10, while sinpi(1000000) gives the exact result 0. If your algorithm involves such extreme values of the argument, x, then you may consider revising the algorithm. Alternatively, use the sinpi function. The value of x is generally the result of a series of calculations involving multiplication by \pi{}. The precision can be improved by removing the multiplication by \pi{} and using the sinpi, cospi, etc., functions instead.
 \vspacebig
 
 \begin{tabular}{|p{30mm}|p{120mm}|}
@@ -721,7 +721,7 @@ s = sincos(&c, a);
 \bfseries Library version & vectormath\_lib.h. Not with Intel compiler. sincospi not available \\ \hline
 \bfseries Description & sinpi(x) = sin(pi*x), etc. \newline
 The ...pi functions are more accurate than the normal trigonometric functions when x is a multiple or simple fraction of $\pi$ or x is high. For example, tanpi(0.5) gives INF while tan(pi*0.5) gives a high number less than INF because $\pi/2$ cannot be represented exactly. tanpi(n+0.5) gives INF for n even, and -INF for n odd, in accordance with the IEEE754-2019 standard. The standard for signed zero results is not necessarily followed. \\ \hline
-\bfseries Range & numerically high values of x are interpreted as even integers, giving exact results. The result may or may not be NAN when the input is infinity. \\ \hline
+\bfseries Range & numerically extreme values of x are interpreted as even integers, giving exact results. The result may or may not be NAN when the input is infinity. \\ \hline
 \bfseries Efficiency & same as normal trigonometric functions, or slightly better \\ \hline
 \end{tabular}
 \vspacebig

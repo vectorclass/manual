@@ -121,7 +121,7 @@ Vec16i lookup16(Vec16i, Vec16i) \newline
 Vec4q lookup4(Vec4q, Vec4q) \newline
 Vec8q lookup8(Vec8q, Vec8q) \\ \hline
 \bfseries Defined for & Vec16c, Vec32c, Vec64c, Vec8s, Vec16s, Vec32s, Vec4i, Vec8i, Vec16i, Vec4q, Vec8q \\ \hline
-\bfseries Description & Permutation with variable indexes. The first input vector contains the indexes, the second input vector is the data source. Each index must be in the range  $0 \leq i \leq n-1$ where n is the number of elements in a vector. \\ \hline
+\bfseries Description & Permutation with variable indexes. The first input vector contains the indexes. The second input vector is the data source. Each index must be in the range  $0 \leq i \leq n-1$ where n is the number of elements in a vector. \\ \hline
 \bfseries Efficiency & 
 Vec16i, Vec8q: Good for AVX512F, medium otherwise.  \newline
 Vec64c, Vec32s: Good for AVX512VBMI, medium for AVX512BW, poor otherwise. \newline
@@ -141,7 +141,7 @@ Vec32s lookup64(Vec32s, Vec32s, Vec32s) \newline
 Vec4i lookup8(Vec4i, Vec4i, Vec4i) \newline
 Vec16i lookup32(Vec16i, Vec16i, Vec16i) \\ \hline
 \bfseries Defined for & Vec16c, Vec64c, Vec8s, Vec32s, Vec4i, Vec16i \\ \hline
-\bfseries Description & Blend with variable indexes. The first input vector contains the indexes, the following two input vectors contain the data source. Each index must be in the range  $0 \leq i \leq 2\cdot n - 1$ where n is the number of elements in each vector. \\ \hline
+\bfseries Description & Blend with variable indexes. The first input vector contains the indexes. The following two input vectors contain the data sources. Each index must be in the range  $0 \leq i \leq 2\cdot n - 1$ where n is the number of elements in each vector. \\ \hline
 \bfseries Efficiency & 
 Vec4i, Vec8s: Good for AVX2, medium or poor otherwise. \newline
 Vec16i: Good for AVX512, medium or poor otherwise. \newline
@@ -159,7 +159,7 @@ Vec16i lookup64(Vec16i, Vec16i, Vec16i, Vec16i, Vec16i) \newline
 Vec64c lookup256(Vec64c, Vec64c, Vec64c, Vec64c, Vec64c) \newline
 Vec32s lookup128(Vec32s, Vec32s, Vec32s, Vec32s, Vec32s) \\ \hline
 \bfseries Defined for & Vec4i, Vec32s, Vec64c \\ \hline
-\bfseries Description & Blend with variable indexes. The first input vector contains the indexes, the following four input vectors contain the data source. Each index must be in the range  $0 \leq i \leq 4\cdot n - 1$ where n is the number of elements in each vector. \\ \hline
+\bfseries Description & Blend with variable indexes. The first input vector contains the indexes. The following four input vectors contain the data sources. Each index must be in the range  $0 \leq i \leq 4\cdot n - 1$ where n is the number of elements in each vector. \\ \hline
 \bfseries Efficiency & 
 Vec4i: Good for AVX2, medium otherwise. \newline
 Vec16i: Good for AVX512, medium or poor otherwise. \newline
@@ -208,6 +208,7 @@ Vec16c lookup\textless n\textgreater(Vec16c index, void const * table) \newline
 Vec32c lookup\textless n\textgreater(Vec32c index, void const * table) \newline
 Vec8s lookup\textless n\textgreater(Vec8s index, void const * table) \newline
 Vec16s lookup\textless n\textgreater(Vec16s index, void const * table) \newline
+Vec32s lookup\textless n\textgreater(Vec32s index, void const * table) \newline
 Vec4i lookup\textless n\textgreater(Vec4i index, void const * table) \newline
 Vec8i lookup\textless n\textgreater(Vec8i index, void const * table) \newline
 Vec16i lookup\textless n\textgreater(Vec16i index, void const * table) \newline
@@ -215,6 +216,7 @@ Vec4q lookup\textless n\textgreater(Vec4q index, void const * table) \newline
 Vec8q lookup\textless n\textgreater(Vec8q index, void const * table) \newline
 Vec8h lookup\textless n\textgreater(Vec8s index, Float16 const * table) \newline
 Vec16h lookup\textless n\textgreater(Vec16s index, Float16 const * table) \newline
+Vec32h lookup\textless n\textgreater(Vec32s index, Float16 const * table) \newline
 Vec4f lookup\textless n\textgreater(Vec4i index, float const * table) \newline
 Vec8f lookup\textless n\textgreater(Vec8i const \& index, float const * table) \newline
 Vec16f lookup\textless n\textgreater(Vec16i const \& index, float const * table) \newline
@@ -225,8 +227,8 @@ Vec8d lookup\textless n\textgreater(Vec8q const \& i, double const * table) \\ \
 \bfseries Description & permute, blend, table lookup, or gather data from array with an integer vector of indexes.\newline
 Each index must be in the range  $0 \leq i \leq n-1$, where $n$ is indicated as a template parameter. $n$ must be a positive compile-time constant. 
 The range check can be omitted by setting n = INT\_MAX. \\ \hline
-\bfseries Efficiency & good for AVX2 and later, medium for lower instruction sets.
-Best if n is no bigger than twice the vector length. \\ \hline
+\bfseries Efficiency & depends on the instruction set and n.
+This is implemented with permute instructions if n is no bigger than twice the vector length and with gather instructions if n is large. It is inefficient if AVX2 is not supported. \\ \hline
 \end{tabular}
 \vspacebig
 
@@ -242,10 +244,10 @@ The lookup functions are similar to the permute and blend functions, but with va
 \end{enumerate}
 \vspacesmall
 
-The index is always an integer vector. The input can be one or more vectors or an array. The result is a vector of the same type as the input. All elements in the index vector must be in the specified range. The behavior for an index out of range is implementation-dependent and may give any value for the corresponding element. The function may in some cases read up to one vector size past the end of the table for the sake of efficient permutation.
+The index is always an integer vector. The input can be one or more vectors or an array. The result type is determined by the inputs. All elements in the index vector must be in the specified range. The behavior for an index out of range is implementation-dependent and may give any value for the corresponding element. The function may in some cases read past the end of the table up to a total size of two or four vector lengths for the sake of efficient permutation.
 \vspacesmall
 
-The lookup functions are not defined for unsigned integer vector types, but the corresponding signed versions can be used. You don't have to worry about overflow when converting unsigned integers to signed here, as long as the result vector is converted back to unsigned.
+The lookup functions are not defined for unsigned integer vector types, but the corresponding signed versions can be used. You do not have to worry about overflow when converting unsigned integers to signed here, as long as the result vector is converted back to unsigned.
 \vspacebig
 
 

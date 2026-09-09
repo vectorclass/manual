@@ -13,10 +13,10 @@ The VCL vector class library is a tool that helps C++ programmers make their cod
 \end{example} % frame disappears if I put this after end lstlisting
 \begin{lstlisting}[frame=single]
 // Array loop
-float a[8], b[8], c[8];        // declare arrays
-...                            // put values into arrays
-for (int i = 0; i < 8; i++) {  // loop for 8 elements
-    c[i] = a[i] + b[i] * 1.5f; // operations on each element
+float a[16], b[16], c[16];      // declare arrays
+...                             // put values into arrays
+for (int i = 0; i < 16; i++) {  // loop for 16 elements
+    c[i] = a[i] + b[i] * 1.5f;  // operations on each element
 }
 \end{lstlisting}
 \vspacesmall
@@ -30,9 +30,9 @@ The vector class library allows you to rewrite example \ref{exampleArrayLoop1} u
 \begin{lstlisting}[frame=single]
 // Array loop using vectors
 #include "vectorclass.h"       // use vector class library
-float a[8], b[8], c[8];        // declare arrays
+float a[16], b[16], c[16];     // declare arrays
 ...                            // put values into arrays
-Vec8f avec, bvec, cvec;        // define vectors of 8 floats each
+Vec16f avec, bvec, cvec;       // define vectors of 16 floats each
 avec.load(a);                  // load array a into vector
 bvec.load(b);                  // load array b into vector
 cvec = avec + bvec * 1.5f;     // do operations on vectors
@@ -40,15 +40,15 @@ cvec.store(c);                 // save result in array c
 \end{lstlisting}
 \vspacesmall
 
-Example \ref{exampleArrayLoopVect} does the same as example \ref{exampleArrayLoop1}, but more efficiently because it utilizes SIMD instructions that do eight additions and/or eight multiplications in a single instruction. Modern microprocessors have these instructions which may give you a throughput of eight floating point additions and eight multiplications per clock cycle. A good optimizing compiler may actually convert example \ref{exampleArrayLoop1} automatically to use the SIMD instructions, but in more complicated cases you cannot be sure that the compiler is able to vectorize your code in an optimal way.
+Example \ref{exampleArrayLoopVect} does the same as example \ref{exampleArrayLoop1}, but much more efficiently because it utilizes SIMD instructions that do sixteen additions and/or sixteen multiplications in a single instruction. Modern microprocessors have these instructions which may give you a throughput of sixteen floating point additions and sixteen multiplications per clock cycle. A good optimizing compiler may actually convert example \ref{exampleArrayLoop1} automatically to use the SIMD instructions, but in more complicated cases you cannot be sure that the compiler is able to vectorize your code in an optimal way.
 \vspacesmall
 
 \section{How it works} \label{HowItWorks}
-The type \codei{Vec8f} in example \ref{exampleArrayLoopVect} is a class that encapsulates the intrinsic type 
-\codei{\_\_m256} which represents a 256-bit vector register holding 8 floating point numbers of 32 bits each. The overloaded operators \codei{+} and \codei{*} represent the SIMD instructions for adding and multiplying vectors. These operators are inlined so that no extra code is generated other than the SIMD instructions. All you have to do to get access to these vector operations is to include "vectorclass.h" in your C++ code and specify the desired instruction set (e.g. SSE2, AVX2, or AVX512) in the compiler options.
+The type \codei{Vec16f} in example \ref{exampleArrayLoopVect} is a class that encapsulates the intrinsic type 
+\codei{\_\_m512} which represents a 512-bit vector register holding 16 floating point numbers of 32 bits each. The overloaded operators \codei{+} and \codei{*} represent the SIMD instructions for adding and multiplying vectors. These operators are inlined so that no extra code is generated other than the SIMD instructions. All you have to do to get access to these vector operations is to include "vectorclass.h" in your C++ code and specify the desired instruction set (e.g. SSE2, AVX2, or AVX512) in the compiler options.
 \vspacesmall
 
-The code in example \ref{exampleArrayLoopVect} can be reduced to just 4 machine instructions if the instruction set AVX or higher is enabled. The SSE2 instruction set will give 8 machine instructions because the maximum vector register size is only half as big for instruction sets prior to AVX. The code in example \ref{exampleArrayLoop1} will generate approximately 44 instructions if the compiler does not automatically vectorize the code.
+The code in example \ref{exampleArrayLoopVect} can be reduced to just 4 machine instructions if the instruction set AVX512 or higher is enabled. The AVX2 instruction set will give 8 machine instructions because the maximum vector register size is only half as big for instruction sets prior to AVX512.
 \vspacesmall
 
 \section{Features of VCL} \label{Features}
@@ -57,21 +57,21 @@ The code in example \ref{exampleArrayLoopVect} can be reduced to just 4 machine 
 \item Vectors of 8-, 16-, 32- and 64-bit integers, signed and unsigned
 \item Vectors of half precision, single precision, and double precision floating point numbers
 \item Total vector size 128, 256, or 512 bits
-\item Defines almost all common operators
-\item Boolean operations and branches on vector elements
-\item Many arithmetic functions
-\item Standard mathematical functions
+\item Defines all common arithmetic and boolean operators
+\item Can do boolean operations and branches on vector elements
+\item Includes many arithmetic functions
+\item Includes standard mathematical functions
 \item Permute, blend, gather, scatter, and table look-up functions
 \item Fast integer division
-\item Can build code for different instruction set extensions from the same source code
+\item Can build code for different instruction set extensions from the same source code and automatically find the optimal implementation for the specified instruction set
 \item CPU dispatching to utilize higher instruction sets when available
-\item Uses metaprogramming to find the optimal implementation for the selected instruction set and parameter values of a given operator or function
+\item Uses compile-time logic to find the optimal implementation for the selected instruction set and parameter values of a given operator or function
 \item Includes extra add-on packages for special purposes and applications
 \end{itemize}
 \vspacesmall
 
 \section{Instruction sets supported} \label{InstructionSetsSupported}
-Since 1997, every new CPU model has extended the x86 instruction set with more SIMD instructions. The VCL library requires the SSE2 instruction set as a minimum, and supports SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX, AVX2, XOP, FMA3, FMA4, and AVX512F/VL/BW/DQ, as well as the new AVX512VBMI/VBMI2 and AVX512-FP16.
+Since 1997, every new CPU model has extended the x86 instruction set with more SIMD instructions. The VCL library requires the SSE2 instruction set as a minimum, and supports SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX, AVX2, FMA, and AVX512 including the extensions AVX512VL/BW/DQ/VBMI/VBMI2/FP16.
 \vspacesmall
 
 \section{Platforms supported} \label{PlatformsSupported}
@@ -79,11 +79,6 @@ VCL has support for Windows, Linux, and Mac, 32-bit and 64-bit, with Intel, AMD,
 \vspacesmall
 
 There are no plans to support ARM or other instruction sets in VCL. If you need other platforms than x86 and x86-64 then you may use the cross-platform function wrapper library named Highway. You can find it at \url{https://github.com/google/highway}.
-\vspacesmall
-
-A special version of the vector class library for the (now obsolete) Intel Knights Corner coprocessor has been developed at CERN. It is available from
-\url{https://bitbucket.org/veclibknc/vclknc.git} or 
-\url{https://bitbucket.org/edanor/umesimd/}
 \vspacesmall
 
 \section{Compilers supported} \label{CompilersSupported}
@@ -108,7 +103,7 @@ VCL version 1.xx is written for older versions of the C++ language that does not
 \vspacesmall
 
 VCL version 2.xx is taking advantage of \codei{constexpr} branches, \codei{constexpr} functions, and other advanced features in 
-C++14 and C++17 for explicitly telling the compiler what calculations to do at compile time, and to remove not-taken branches. This makes the code clearer and more efficient. It is recommended to use the latest version of VCL, if possible.
+C++17 for explicitly telling the compiler what calculations to do at compile time, and to remove not-taken branches. This makes the code clearer and more efficient. It is recommended to use the latest version of VCL, if possible.
 \vspacesmall
 
 The following cases illustrate the use of metaprogramming in VCL:
